@@ -1,0 +1,13 @@
+.auth-container {
+  max-width: 380px;
+  margin: 4rem auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2rem;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 12px;
+}
+
+.error { color: red; font-size: 13px; }
+.success { color: green; font-size: 13px; }
