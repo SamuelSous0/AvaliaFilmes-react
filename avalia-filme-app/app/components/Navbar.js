@@ -3,6 +3,8 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import styles from "./Navbar.module.css";
+
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -36,11 +38,11 @@ export default function Navbar() {
   // Se não estiver logado, podemos optar por mostrar uma navbar simplificada ou apenas a logo
   if (!isLogged) {
     return (
-      <nav className="navbar-principal">
-        <div className="navbar-logo">
+      <nav className={styles.navbarPrincipal}>
+        <div className={styles.navbarLogo}>
           <Link href="/login">AvaliaFilmes</Link>
         </div>
-        <div className="navbar-usuario">
+        <div className={styles.navbarUsuario}>
           <Link href="/login" style={{color: '#ffcc00', textDecoration: 'none', fontWeight: 'bold'}}>Entrar</Link>
         </div>
       </nav>
@@ -48,12 +50,12 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="navbar-principal">
-      <div className="navbar-logo">
+    <nav className={styles.navbarPrincipal}>
+      <div className={styles.navbarLogo}>
         <Link href="/">AvaliaFilmes</Link>
       </div>
       
-      <ul className="navbar-links">
+      <ul className={styles.navbarLinks}>
         <li>
           <Link href="/">Início</Link>
         </li>
@@ -62,9 +64,9 @@ export default function Navbar() {
         </li>
       </ul>
 
-      <div className="navbar-usuario">
+      <div className={styles.navbarUsuario}>
         <span>Olá, {username}</span>
-        <button onClick={handleLogout} className="btn-sair-navbar">Sair</button>
+        <button onClick={handleLogout} className={styles.botaoSairNavbar}>Sair</button>
       </div>
     </nav>
   );

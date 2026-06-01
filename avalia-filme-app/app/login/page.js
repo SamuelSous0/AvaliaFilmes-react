@@ -3,6 +3,8 @@ import { useState } from "react";
 import { userLogin } from "../../services/userApi";
 import { useRouter } from "next/navigation";
 
+import styles from "./login.module.css";
+
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ name: "", password: "" });
@@ -28,7 +30,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="auth-container">
+    <div className={styles.containerAutenticacao}>
       <h2>Entrar</h2>
       <input placeholder="Nome de usuário"
         value={form.name}
@@ -36,7 +38,7 @@ export default function LoginPage() {
       <input type="password" placeholder="Senha"
         value={form.password}
         onChange={e => setForm({ ...form, password: e.target.value })} />
-      {error && <p className="error">{error}</p>}
+      {error && <p className={styles.erro}>{error}</p>}
       <button onClick={handleSubmit} disabled={loading}>
         {loading ? "Entrando..." : "Entrar"}
       </button>

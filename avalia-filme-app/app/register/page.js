@@ -3,6 +3,8 @@ import { useState } from "react";
 import { userSignUp } from "../../services/userApi";
 import { useRouter } from "next/navigation";
 
+import styles from "./register.module.css";
+
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "", age: "" });
@@ -27,7 +29,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="auth-container">
+    <div className={styles.containerAutenticacao}>
       <h2>Criar conta</h2>
       <input placeholder="Nome"
         value={form.name}
@@ -41,7 +43,7 @@ export default function RegisterPage() {
       <input type="number" placeholder="Idade"
         value={form.age}
         onChange={e => setForm({ ...form, age: e.target.value })} />
-      {error && <p className="error">{error}</p>}
+      {error && <p className={styles.erro}>{error}</p>}
       <button onClick={handleSubmit} disabled={loading}>
         {loading ? "Cadastrando..." : "Cadastrar"}
       </button>

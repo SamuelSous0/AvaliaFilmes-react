@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import { updateUser, deleteUser, getUserById } from "../../services/userApi";
+import { getPerfilById, savePerfil, getAllPerfis } from "../../services/perfilApi";
 import { useRouter } from "next/navigation";
+import styles from "./profile.module.css";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -9,11 +11,11 @@ export default function ProfilePage() {
     name: "", 
     email: "", 
     password: "", 
-    age: "",
     bio: "",
     photoUrl: "" 
   });
   const [userId, setUserId] = useState(null);
+  const [perfilId, setPerfilId] = useState(null);
   const [msg, setMsg] = useState({ text: "", type: "" });
   const [loading, setLoading] = useState(true);
 
@@ -24,20 +26,30 @@ export default function ProfilePage() {
       return; 
     }
     setUserId(id);
-    loadUserData(id);
+    loadAllData(id);
   }, []);
 
-  const loadUserData = async (id) => {
+  const loadAllData = async (id) => {
     try {
-      const data = await getUserById(id);
+      // 1. Carrega dados básicos do Usuário
+      const userData = await getUserById(id);
+      
+      // 2. Busca na lista de todos os perfis o que pertence a este usuário
+      const allPerfis = await getAllPerfis();
+      
+      // O PerfilResponseDTO usa 'username' para o nome do dono
+      const meuPerfil = allPerfis.find(p => p.username === userData.name);
+
       setForm({
-        name: data.name || "",
-        email: data.email || "",
+        name: userData.name || "",
+        email: userData.email || "",
         password: "",
-        age: data.age || "",
-        bio: data.bio || "",
-        photoUrl: data.photoUrl || ""
+        bio: meuPerfil?.biografia || "",
+        photoUrl: meuPerfil?.fotoUrl || ""
       });
+
+      if (meuPerfil) setPerfilId(meuPerfil.id);
+
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -47,13 +59,54 @@ export default function ProfilePage() {
 
   const handleUpdate = async () => {
     setMsg({ text: "Salvando...", type: "info" });
+    let erroUsuario = false;
+    let erroPerfil = false;
+    
     try {
-      await updateUser(userId, form);
-      setMsg({ text: "Perfil atualizado com sucesso!", type: "success" });
-      localStorage.setItem("username", form.name);
+      // 1. Sempre tenta atualizar o Perfil (Foto e Bio)
+      try {
+        await savePerfil({
+          userId: Number(userId),
+          biografia: form.bio,
+          fotoUrl: form.photoUrl
+        });
+      } catch (e) {
+        console.error("Erro no Perfil:", e);
+        erroPerfil = true;
+      }
+
+      // 2. Atualiza dados de Usuário apenas se a senha for fornecida
+      if (form.password) {
+        try {
+          await updateUser(userId, {
+            name: form.name,
+            email: form.email,
+            password: form.password
+          });
+          localStorage.setItem("username", form.name);
+        } catch (e) {
+          console.error("Erro no Usuário:", e);
+          erroUsuario = true;
+        }
+      }
+
+      // 3. Feedback final para o usuário
+      if (erroUsuario && erroPerfil) {
+        setMsg({ text: "Erro ao salvar alterações.", type: "error" });
+      } else if (erroUsuario) {
+        setMsg({ text: "Perfil salvo, mas erro ao atualizar dados de login (verifique a senha).", type: "error" });
+      } else if (erroPerfil) {
+        setMsg({ text: "Erro ao salvar foto/biografia.", type: "error" });
+      } else {
+        setMsg({ text: "Alterações salvas com sucesso!", type: "success" });
+        setForm(prev => ({ ...prev, password: "" }));
+        await loadAllData(userId);
+      }
+      
       setTimeout(() => setMsg({ text: "", type: "" }), 3000);
-    } catch {
-      setMsg({ text: "Erro ao atualizar perfil.", type: "error" });
+    } catch (error) {
+      console.error("Erro geral:", error);
+      setMsg({ text: "Ocorreu um erro inesperado.", type: "error" });
     }
   };
 
@@ -73,25 +126,25 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return <div className="loading">Carregando perfil...</div>;
+  if (loading) return <div className={styles.carregando}>Carregando perfil...</div>;
 
   return (
-    <div className="profile-wrapper">
-      <div className="profile-card">
-        <div className="profile-header">
-          <div className="avatar-container">
+    <div className={styles.containerPerfil}>
+      <div className={styles.cartaoPerfil}>
+        <div className={styles.headerPerfil}>
+          <div className={styles.containerAvatar}>
             {form.photoUrl ? (
-              <img src={form.photoUrl} alt="Profile" className="avatar-image" />
+              <img src={form.photoUrl} alt="Profile" className={styles.imagemAvatar} />
             ) : (
-              <div className="avatar-placeholder">{form.name.charAt(0)}</div>
+              <div className={styles.marcadorAvatar}>{form.name.charAt(0)}</div>
             )}
           </div>
           <h2>{form.name}</h2>
-          <p className="user-email">{form.email}</p>
+          <p className={styles.emailUsuario}>{form.email}</p>
         </div>
 
-        <div className="profile-form">
-          <div className="form-group">
+        <div className={styles.formularioPerfil}>
+          <div className={styles.grupoFormulario}>
             <label>Foto (URL)</label>
             <input 
               placeholder="https://exemplo.com/foto.jpg"
@@ -100,25 +153,17 @@ export default function ProfilePage() {
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className={styles.linhaFormulario}>
+            <div className={styles.grupoFormulario}>
               <label>Nome</label>
               <input 
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })} 
               />
             </div>
-            <div className="form-group">
-              <label>Idade</label>
-              <input 
-                type="number" 
-                value={form.age}
-                onChange={e => setForm({ ...form, age: e.target.value })} 
-              />
-            </div>
           </div>
 
-          <div className="form-group">
+          <div className={styles.grupoFormulario}>
             <label>E-mail</label>
             <input 
               value={form.email}
@@ -126,7 +171,7 @@ export default function ProfilePage() {
             />
           </div>
 
-          <div className="form-group">
+          <div className={styles.grupoFormulario}>
             <label>Biografia</label>
             <textarea 
               placeholder="Conte um pouco sobre você..."
@@ -136,7 +181,7 @@ export default function ProfilePage() {
             />
           </div>
 
-          <div className="form-group">
+          <div className={styles.grupoFormulario}>
             <label>Nova Senha</label>
             <input 
               type="password" 
@@ -146,14 +191,18 @@ export default function ProfilePage() {
             />
           </div>
 
-          {msg.text && <p className={`message ${msg.type}`}>{msg.text}</p>}
+          {msg.text && (
+            <p className={`${styles.mensagem} ${msg.type === 'success' ? styles.sucesso : msg.type === 'error' ? styles.erro : styles.info}`}>
+              {msg.text}
+            </p>
+          )}
 
-          <div className="actions">
-            <button className="btn-save" onClick={handleUpdate}>Salvar Alterações</button>
-            <button className="btn-logout" onClick={handleLogout}>Sair</button>
+          <div className={styles.acoes}>
+            <button className={styles.botaoSalvar} onClick={handleUpdate}>Salvar Alterações</button>
+            <button className={styles.botaoSair} onClick={handleLogout}>Sair</button>
           </div>
           
-          <button className="btn-delete" onClick={handleDelete}>Deletar Conta</button>
+          <button className={styles.botaoDeletar} onClick={handleDelete}>Deletar Conta</button>
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@ export async function userSignUp(user) {
 export async function userLogin(credentials) {
   const response = await instance.post("/users/login", credentials);
   return response.data;
+
 }
 
 export async function getAllUsers() {
