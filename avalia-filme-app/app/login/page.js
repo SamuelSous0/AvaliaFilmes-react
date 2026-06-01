@@ -13,10 +13,13 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const user = await userLogin(form);
+      const user = await userLogin({
+        name: form.name.trim(),
+        password: form.password.trim()
+      });
       localStorage.setItem("userId", user.id);
       localStorage.setItem("username", user.name);
-      router.push("/profile");
+      router.push("/");
     } catch {
       setError("Usuário ou senha incorretos");
     } finally {
