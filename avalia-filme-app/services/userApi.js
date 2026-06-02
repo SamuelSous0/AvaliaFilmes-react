@@ -1,8 +1,7 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL:
-    "https://fuzzy-space-carnival-g47j9w6qqprv3vxxp-8080.app.github.dev/api/v1",
+  baseURL: `${process.env.NEXT_PUBLIC_API_URL}/api/v1`,
   headers: { "Content-Type": "application/json" },
 });
 
