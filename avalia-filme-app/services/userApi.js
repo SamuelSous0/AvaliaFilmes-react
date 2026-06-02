@@ -35,3 +35,13 @@ export async function deleteUser(id) {
   const response = await instance.delete(`/users/user/${id}`);
   return response.data;
 }
+
+export async function recuperarSenha(email) {
+  const response = await instance.post("/users/recuperar-senha", { email });
+  return response.data;
+}
+
+export async function redefinirSenha(codigo, novaSenha) {
+  const response = await instance.post("/users/redefinir-senha", { codigo, novaSenha });
+  return response.data;
+}
