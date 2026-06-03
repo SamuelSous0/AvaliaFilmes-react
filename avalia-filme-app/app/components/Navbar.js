@@ -35,7 +35,6 @@ export default function Navbar() {
     router.push("/login");
   };
 
-  // Se não estiver logado, podemos optar por mostrar uma navbar simplificada ou apenas a logo
   if (!isLogged) {
     return (
       <nav className={styles.navbarPrincipal}>
@@ -43,7 +42,16 @@ export default function Navbar() {
           <Link href="/login">AvaliaFilmes</Link>
         </div>
         <div className={styles.navbarUsuario}>
-          <Link href="/login" style={{color: '#ffcc00', textDecoration: 'none', fontWeight: 'bold'}}>Entrar</Link>
+          <Link
+            href="/login"
+            style={{
+              color: "#ffcc00",
+              textDecoration: "none",
+              fontWeight: "bold",
+            }}
+          >
+            Entrar
+          </Link>
         </div>
       </nav>
     );
@@ -54,7 +62,7 @@ export default function Navbar() {
       <div className={styles.navbarLogo}>
         <Link href="/">AvaliaFilmes</Link>
       </div>
-      
+
       <ul className={styles.navbarLinks}>
         <li>
           <Link href="/">Início</Link>
@@ -66,9 +74,10 @@ export default function Navbar() {
 
       <div className={styles.navbarUsuario}>
         <span>Olá, {username}</span>
-        <button onClick={handleLogout} className={styles.botaoSairNavbar}>Sair</button>
+        <button onClick={handleLogout} className={styles.botaoSairNavbar}>
+          Sair
+        </button>
       </div>
     </nav>
   );
 }
-

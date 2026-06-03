@@ -16,6 +16,9 @@ export default function RecuperarSenhaPage() {
     try {
       await recuperarSenha(email);
       setMsg("Se este e-mail estiver cadastrado, você receberá o código em breve.");
+      setTimeout(() => {
+        router.push("/reset-password");
+      }, 3000);
     } catch {
       setMsg("Erro ao processar. Tente novamente.");
     } finally {
@@ -36,6 +39,7 @@ export default function RecuperarSenhaPage() {
       <button onClick={handleSubmit} disabled={loading}>
         {loading ? "Enviando..." : "Enviar código"}
       </button>
+      <button onClick={() => router.push("/reset-password")}>Já tenho um código</button>
       <button onClick={() => router.push("/login")}>Voltar ao login</button>
     </div>
   );

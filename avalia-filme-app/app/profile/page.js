@@ -31,8 +31,18 @@ export default function ProfilePage() {
 
   const loadAllData = async (id) => {
     try {
+      if (!id || id === "undefined") {
+        console.error("ID de usuário inválido detectado no localStorage.");
+        router.push("/login");
+        return;
+      }
+
       // 1. Carrega dados básicos do Usuário
       const userData = await getUserById(id);
+      
+      if (!userData) {
+        throw new Error("Dados do usuário não encontrados.");
+      }
       
       // 2. Busca na lista de todos os perfis o que pertence a este usuário
       const allPerfis = await getAllPerfis();

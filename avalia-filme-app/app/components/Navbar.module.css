@@ -3,55 +3,69 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 5%;
-  background-color: #1a1a1a;
-  border-bottom: 3px solid #ffcc00;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  background-color: #000;
+  border-bottom: 2px solid var(--primary-color);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .navbarLogo a {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #ffcc00;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary-color);
   text-decoration: none;
+  letter-spacing: -1px;
 }
 
 .navbarLinks {
   display: flex;
   list-style: none;
-  gap: 20px;
+  gap: 30px;
   margin: 0;
   padding: 0;
 }
 
 .navbarLinks a {
   text-decoration: none;
-  color: #ffffff; 
-  font-weight: 500;
+  color: var(--text-main); 
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   transition: color 0.2s;
 }
 
 .navbarLinks a:hover {
-  color: #ffcc00;
+  color: var(--accent-color);
 }
 
 .navbarUsuario {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 20px;
 }
 
 .navbarUsuario span {
   font-size: 14px;
-  color: #aaaaaa;
+  color: var(--accent-color);
+  font-weight: bold;
 }
 
 .botaoSairNavbar {
-  background-color: #8b0000;
+  background-color: var(--primary-color);
   color: white;
-  border: 1px solid #ffcc00;
-  padding: 6px 12px;
-  border-radius: 6px;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
   transition: background 0.2s;
+}
+
+.botaoSairNavbar:hover {
+  background-color: #b20710;
 }

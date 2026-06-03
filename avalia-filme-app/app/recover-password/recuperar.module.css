@@ -1,53 +1,72 @@
 .containerAutenticacao {
-  background-color: #1e1e1e;
-  max-width: 380px;
-  margin: 4rem auto;
+  background-color: var(--bg-card);
+  max-width: 420px;
+  margin: 5rem auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 2rem;
-  border: 1px solid #333;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  gap: 20px;
+  padding: 3rem;
+  border-radius: 8px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.6);
 }
 
 .containerAutenticacao h2 {
-  color: #8b0000;
+  color: #fff;
   text-align: center;
+  font-size: 2rem;
 }
 
 .containerAutenticacao p {
-  color: #aaa;
-  font-size: 14px;
+  color: var(--text-secondary);
   text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .containerAutenticacao input {
-  background-color: #2a2a2a;
-  border: 1px solid #444;
-  color: white;
-  padding: 10px;
-  border-radius: 6px;
+  background-color: #333;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #fff;
+  padding: 15px;
+  border-radius: 4px;
+}
+
+.containerAutenticacao input:focus {
+  border-bottom-color: var(--primary-color);
+  outline: none;
 }
 
 .containerAutenticacao button {
-  background-color: #8b0000;
-  color: white;
-  border: 1px solid #ffffff88;
-  padding: 10px;
-  border-radius: 6px;
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 15px;
+  border-radius: 4px;
   font-weight: bold;
   cursor: pointer;
+  text-transform: uppercase;
 }
 
-.erro {
-  color: #ff5252;
-  font-size: 13px;
-  text-align: center;
+.containerAutenticacao button:nth-of-type(2) {
+  background-color: transparent;
+  color: var(--accent-color);
+  font-size: 0.9rem;
+  text-transform: none;
+}
+
+.containerAutenticacao button:last-child {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid #444;
+  font-size: 0.9rem;
 }
 
 .msg {
-  color: #4caf50;
-  font-size: 13px;
+  color: #28a745;
+  font-size: 14px;
   text-align: center;
+  background: rgba(40, 167, 69, 0.1);
+  padding: 10px;
+  border-radius: 4px;
 }

@@ -1,47 +1,53 @@
 .containerAutenticacao {
-  background-color: #1e1e1e;
-  max-width: 380px;
+  background-color: var(--bg-card);
+  max-width: 400px;
   margin: 4rem auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 2rem;
-  border: 1px solid #333;
+  gap: 15px;
+  padding: 2.5rem;
+  border: 1px solid var(--primary-color);
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.1);
 }
 
 .containerAutenticacao h2 {
-  color: #8b0000;
+  color: var(--primary-color);
   text-align: center;
 }
 
 .containerAutenticacao input {
   background-color: #2a2a2a;
   border: 1px solid #444;
-  color: white;
-  padding: 10px;
+  color: var(--secondary-color);
+  padding: 12px;
   border-radius: 6px;
 }
 
 .containerAutenticacao button {
-  background-color: #8b0000;
-  color: white;
-  border: 1px solid #ffffff88;
-  padding: 10px;
+  background-color: var(--primary-color);
+  color: #000;
+  border: none;
+  padding: 12px;
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
 }
 
+.containerAutenticacao button:last-child {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid #444;
+}
+
 .erro {
-  color: #ff5252;
+  color: var(--danger);
   font-size: 13px;
   text-align: center;
 }
 
 .msg {
-  color: #4caf50;
+  color: var(--primary-color);
   font-size: 13px;
   text-align: center;
 }
