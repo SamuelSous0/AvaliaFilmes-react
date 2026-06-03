@@ -47,6 +47,9 @@ export default function LoginPage() {
         {loading ? "Entrando..." : "Entrar"}
       </button>
       <button onClick={() => router.push("/register")}>Criar conta</button>
+      <button onClick={() => router.push("/recover-password")}>Esqueci minha senha</button>
     </div>
   );
+
+
 }
