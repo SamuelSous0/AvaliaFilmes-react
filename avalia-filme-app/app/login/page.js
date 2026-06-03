@@ -32,9 +32,9 @@ export default function LoginPage() {
   return (
     <div className={styles.containerAutenticacao}>
       <h2>Entrar</h2>
-      <input placeholder="Nome de usuário"
-        value={form.name}
-        onChange={e => setForm({ ...form, name: e.target.value })} />
+      <input placeholder="e-mail"
+        value={form.email}
+        onChange={e => setForm({ ...form, email: e.target.value })} />
       <input type="password" placeholder="Senha"
         value={form.password}
         onChange={e => setForm({ ...form, password: e.target.value })} />
