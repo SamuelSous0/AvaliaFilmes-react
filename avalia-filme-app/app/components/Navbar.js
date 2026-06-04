@@ -68,6 +68,9 @@ export default function Navbar() {
           <Link href="/">Início</Link>
         </li>
         <li>
+          <Link href="/filmes">Filmes</Link>
+        </li>
+        <li>
           <Link href="/profile">Meu Perfil</Link>
         </li>
       </ul>

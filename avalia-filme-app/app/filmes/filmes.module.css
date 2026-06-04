@@ -1,0 +1,249 @@
+.containerFilmes {
+  min-height: calc(100vh - 70px);
+  padding: 3rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  background-color: var(--bg-dark);
+}
+
+.cartaoFilmes {
+  background-color: var(--bg-card);
+  border-radius: 12px;
+  border: 1px solid #333;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+  padding: 2rem;
+}
+
+.cabecalho {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.cabecalho h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.subtitulo {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  max-width: 560px;
+}
+
+.formulario {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.grupoFormulario {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grupoFormulario label {
+  color: #888;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.grupoFormulario input,
+.grupoFormulario textarea {
+  background-color: #262626;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.grupoFormulario input:focus,
+.grupoFormulario textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  background-color: #2a2a2a;
+}
+
+.grupoFormulario textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.linhaFormulario {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.acoes {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.botaoSalvar {
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.2s;
+}
+
+.botaoSalvar:hover {
+  background-color: #b20710;
+}
+
+.botaoCancelar {
+  background-color: transparent;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.botaoCancelar:hover {
+  border-color: #fff;
+}
+
+.mensagem {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: bold;
+}
+
+.sucesso {
+  background: rgba(40, 167, 69, 0.12);
+  color: #28a745;
+}
+
+.erro {
+  background: rgba(229, 9, 20, 0.12);
+  color: var(--primary-color);
+}
+
+.listaFilmes {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.listaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+}
+
+.listaHeader h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.listaHeader span {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.cardFilme {
+  background-color: #181818;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cardFilmeTopo {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.cardFilmeTitulo {
+  margin: 0;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.cardFilmeDetalhe {
+  margin: 0.4rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.cardFilmeNota {
+  color: var(--accent-color);
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.cardFilmeDescricao {
+  color: #ddd;
+  line-height: 1.6;
+}
+
+.cardFilmeAcoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.botaoEditar,
+.botaoExcluir {
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.botaoEditar {
+  background-color: transparent;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+}
+
+.botaoEditar:hover {
+  background-color: rgba(255, 204, 0, 0.1);
+}
+
+.botaoExcluir {
+  background-color: var(--danger);
+  border: none;
+  color: #fff;
+}
+
+.botaoExcluir:hover {
+  opacity: 0.9;
+}
+
+.carregando,
+.vazio {
+  color: var(--accent-color);
+  padding: 1.5rem;
+  background-color: #121212;
+  border: 1px solid #333;
+  border-radius: 12px;
+}
