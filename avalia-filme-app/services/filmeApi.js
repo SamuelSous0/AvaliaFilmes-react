@@ -6,7 +6,7 @@ const instance = axios.create({
 });
 
 export async function getAllFilmes() {
-  const response = await instance.get("/filmes/all");
+  const response = await instance.get("/filmes/allFilmes");
   return response.data;
 }
 
