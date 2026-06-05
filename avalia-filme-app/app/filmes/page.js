@@ -5,10 +5,27 @@ import { getAllFilmes, updateFilme } from "../../services/filmeApi";
 import styles from "./filmes.module.css";
 
 const initialForm = { rating: "", review: "" };
+const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+
+async function buscarPoster(titulo) {
+  try {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(titulo)}&language=pt-BR`
+    );
+    const data = await res.json();
+    const poster = data.results?.[0]?.poster_path;
+    return poster ? `https://image.tmdb.org/t/p/w200${poster}` : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function FilmesPage() {
   const router = useRouter();
   const [filmes, setFilmes] = useState([]);
+  const [filtrados, setFiltrados] = useState([]);
+  const [busca, setBusca] = useState("");
+  const [posters, setPosters] = useState({});
   const [form, setForm] = useState(initialForm);
   const [avaliacaoAbertaId, setAvaliacaoAbertaId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,7 +36,18 @@ export default function FilmesPage() {
     try {
       setLoading(true);
       const data = await getAllFilmes();
-      setFilmes(Array.isArray(data) ? data : []);
+      const lista = Array.isArray(data) ? data : [];
+      setFilmes(lista);
+      setFiltrados(lista);
+
+      const postersMap = {};
+      await Promise.all(
+        lista.map(async (filme) => {
+          const url = await buscarPoster(filme.titulo);
+          if (url) postersMap[filme.id] = url;
+        })
+      );
+      setPosters(postersMap);
     } catch (error) {
       console.error(error);
       setMessage({ text: "Falha ao carregar filmes.", type: "error" });
@@ -30,26 +58,27 @@ export default function FilmesPage() {
 
   useEffect(() => {
     const id = localStorage.getItem("userId");
-    if (!id) {
-      router.push("/login");
-      return;
-    }
-
-    const carregar = async () => {
-      await loadFilmes();
-    };
-
-    carregar();
+    if (!id) { router.push("/login"); return; }
+    loadFilmes();
   }, [router]);
 
-  const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
+  useEffect(() => {
+    if (!busca.trim()) {
+      setFiltrados(filmes);
+    } else {
+      setFiltrados(filmes.filter(f =>
+        f.titulo?.toLowerCase().includes(busca.toLowerCase()) ||
+        f.diretor?.toLowerCase().includes(busca.toLowerCase()) ||
+        f.genero?.toLowerCase().includes(busca.toLowerCase())
+      ));
+    }
+  }, [busca, filmes]);
+
+  const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   const abrirAvaliacao = (filme) => {
     setAvaliacaoAbertaId(filme.id);
     setForm({ rating: filme.rating != null ? String(filme.rating) : "", review: filme.review || "" });
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const cancelarAvaliacao = () => {
@@ -63,12 +92,10 @@ export default function FilmesPage() {
       setMessage({ text: "Avaliação deve ficar entre 0 e 10.", type: "error" });
       return;
     }
-
     const payload = {
       rating: form.rating ? Number(form.rating) : null,
       review: form.review ? form.review.trim() : "",
     };
-
     try {
       setSaving(true);
       await updateFilme(id, payload);
@@ -85,13 +112,27 @@ export default function FilmesPage() {
 
   return (
     <div className={styles.containerFilmes}>
-      <div className={styles.cartaoFilmes}>
-        <div className={styles.cabecalho}>
-          <div>
-            <h2>Filmes</h2>
-            <p className={styles.subtitulo}>Visualize filmes e adicione sua avaliação (nota e comentário).</p>
-          </div>
+      <div className={styles.listaFilmes}>
+        <div className={styles.listaHeader}>
+          <h3>Lista de Filmes</h3>
+          <span>{filtrados.length} filme(s) encontrados</span>
         </div>
+
+        <input
+          placeholder="Buscar por título, diretor ou gênero..."
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "12px",
+            backgroundColor: "#2a2a2a",
+            border: "1px solid #444",
+            borderRadius: "6px",
+            color: "white",
+            fontSize: "14px"
+          }}
+        />
 
         {message.text && (
           <p className={`${styles.mensagem} ${message.type === "success" ? styles.sucesso : styles.erro}`}>
@@ -99,36 +140,35 @@ export default function FilmesPage() {
           </p>
         )}
 
-        <div className={styles.formulario}>
-          <p className={styles.subtitulo}>Selecione um filme na lista à direita para avaliar.</p>
-        </div>
-      </div>
-
-      <div className={styles.listaFilmes}>
-        <div className={styles.listaHeader}>
-          <h3>Lista de Filmes</h3>
-          <span>{filmes.length} filme(s) encontrados</span>
-        </div>
-
         {loading ? (
           <div className={styles.carregando}>Carregando filmes...</div>
-        ) : filmes.length === 0 ? (
-          <div className={styles.vazio}>Nenhum filme cadastrado ainda.</div>
+        ) : filtrados.length === 0 ? (
+          <div className={styles.vazio}>Nenhum filme encontrado.</div>
         ) : (
-          filmes.map((filme) => (
+          filtrados.map((filme) => (
             <div key={filme.id} className={styles.cardFilme}>
               <div className={styles.cardFilmeTopo}>
-                <div>
-                  <p className={styles.cardFilmeTitulo}>{filme.title}</p>
+                {posters[filme.id] && (
+                  <img
+                    src={posters[filme.id]}
+                    alt={filme.titulo}
+                    style={{ width: 60, borderRadius: 6, marginRight: 12, objectFit: "cover" }}
+                  />
+                )}
+                <div style={{ flex: 1 }}>
+                  <p className={styles.cardFilmeTitulo}>{filme.titulo}</p>
                   <p className={styles.cardFilmeDetalhe}>
-                    {filme.director} • {filme.year || "Ano não informado"}
+                    {filme.diretor} • {filme.anoLancamento}
                   </p>
+                  <p className={styles.cardFilmeDetalhe}>{filme.genero}</p>
                 </div>
                 <div className={styles.cardFilmeNota}>
                   {filme.rating != null ? `${filme.rating}/10` : "—"}
                 </div>
               </div>
+
               {filme.review && <p className={styles.cardFilmeDescricao}>{filme.review}</p>}
+
               <div className={styles.cardFilmeAcoes}>
                 <button className={styles.botaoEditar} onClick={() => abrirAvaliacao(filme)}>
                   {filme.rating != null ? "Editar avaliação" : "Avaliar"}
