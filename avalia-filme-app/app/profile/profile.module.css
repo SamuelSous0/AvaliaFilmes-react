@@ -1,10 +1,14 @@
 .containerPerfil {
   min-height: calc(100vh - 70px);
-  padding: 3rem 1rem;
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
-  background-color: var(--bg-dark);
+  background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), 
+    url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  padding: 40px 20px;
 }
 
 .cartaoPerfil {
@@ -194,10 +198,12 @@
 
 .carregando {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   height: calc(100vh - 70px);
   color: var(--accent-color);
   font-weight: bold;
   font-size: 1.2rem;
+  gap: 20px;
 }

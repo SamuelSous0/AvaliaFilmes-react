@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
 import styles from "./Navbar.module.css";
 
@@ -35,52 +36,77 @@ export default function Navbar() {
     router.push("/login");
   };
 
+  const navVariants = {
+    hidden: { y: -50, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.5 } }
+  };
+
   if (!isLogged) {
     return (
-      <nav className={styles.navbarPrincipal}>
+      <motion.nav 
+        className={styles.navbarPrincipal}
+        initial="hidden"
+        animate="visible"
+        variants={navVariants}
+      >
         <div className={styles.navbarLogo}>
           <Link href="/login">AvaliaFilmes</Link>
         </div>
         <div className={styles.navbarUsuario}>
-          <Link
-            href="/login"
-            style={{
-              color: "#ffcc00",
-              textDecoration: "none",
-              fontWeight: "bold",
-            }}
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
           >
-            Entrar
-          </Link>
+            <Link
+              href="/login"
+              style={{
+                color: "#ffcc00",
+                textDecoration: "none",
+                fontWeight: "bold",
+              }}
+            >
+              Entrar
+            </Link>
+          </motion.div>
         </div>
-      </nav>
+      </motion.nav>
     );
   }
 
   return (
-    <nav className={styles.navbarPrincipal}>
+    <motion.nav 
+      className={styles.navbarPrincipal}
+      initial="hidden"
+      animate="visible"
+      variants={navVariants}
+    >
       <div className={styles.navbarLogo}>
         <Link href="/">AvaliaFilmes</Link>
       </div>
 
       <ul className={styles.navbarLinks}>
-        <li>
+        <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
           <Link href="/">Início</Link>
-        </li>
-        <li>
+        </motion.li>
+        <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
           <Link href="/filmes">Filmes</Link>
-        </li>
-        <li>
+        </motion.li>
+        <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
           <Link href="/profile">Meu Perfil</Link>
-        </li>
+        </motion.li>
       </ul>
 
       <div className={styles.navbarUsuario}>
         <span>Olá, {username}</span>
-        <button onClick={handleLogout} className={styles.botaoSairNavbar}>
+        <motion.button 
+          onClick={handleLogout} 
+          className={styles.botaoSairNavbar}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
           Sair
-        </button>
+        </motion.button>
       </div>
-    </nav>
+    </motion.nav>
   );
 }

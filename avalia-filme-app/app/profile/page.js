@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { updateUser, deleteUser, getUserById } from "../../services/userApi";
 import { getPerfilById, savePerfil, getAllPerfis } from "../../services/perfilApi";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import styles from "./profile.module.css";
 
 export default function ProfilePage() {
@@ -18,6 +19,20 @@ export default function ProfilePage() {
   const [perfilId, setPerfilId] = useState(null);
   const [msg, setMsg] = useState({ text: "", type: "" });
   const [loading, setLoading] = useState(true);
+
+  const dotVariants = {
+    animate: {
+      scale: [0.5, 1, 0.5],
+      opacity: [0.3, 1, 0.3],
+    }
+  };
+
+  const dotTransition = (i) => ({
+    duration: 1.2,
+    repeat: Infinity,
+    ease: "linear",
+    delay: i * 0.15
+  });
 
   useEffect(() => {
     const id = localStorage.getItem("userId");
@@ -136,7 +151,30 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return <div className={styles.carregando}>Carregando perfil...</div>;
+  if (loading) return (
+    <div className={styles.carregando}>
+      <div style={{ width: 40, height: 40, position: "relative" }}>
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={i}
+            variants={dotVariants}
+            animate="animate"
+            transition={dotTransition(i)}
+            style={{
+              width: 10,
+              height: 10,
+              backgroundColor: "var(--primary-color)",
+              borderRadius: "50%",
+              position: "absolute",
+              top: 20 + 15 * Math.sin((i * 45 * Math.PI) / 180) - 5,
+              left: 20 + 15 * Math.cos((i * 45 * Math.PI) / 180) - 5,
+            }}
+          />
+        ))}
+      </div>
+      <span>Carregando perfil...</span>
+    </div>
+  );
 
   return (
     <div className={styles.containerPerfil}>
