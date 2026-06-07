@@ -90,9 +90,12 @@ export default function Navbar() {
         </motion.li>
         <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
           <Link href="/filmes">Filmes</Link>
-        </motion.li>
+        </motion.li>   
         <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
           <Link href="/grupos">Grupos</Link>
+        </motion.li>
+        <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+          <Link href="/post-perfil">Posts</Link>
         </motion.li>
         <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
           <Link href="/profile">Meu Perfil</Link>
