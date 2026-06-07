@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   saveGrupo,
   updateGrupo,
@@ -11,6 +12,7 @@ import {
   adicionarFilme,
   removerFilme,
 } from "../../services/grupoApi";
+import FilmePoster from "../components/FilmePoster/FilmePoster";
 import styles from "./grupos.module.css";
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
@@ -19,28 +21,49 @@ const initialForm = { nome: "", descricao: "" };
 export default function GruposPage() {
   const router = useRouter();
 
-  // state management
   const [busca, setBusca] = useState("");
   const [form, setForm] = useState(initialForm);
   const [editandoId, setEditandoId] = useState(null);
   const [gerenciandoId, setGerenciandoId] = useState(null);
+  const [expandidoId, setExpandidoId] = useState(null);
   const [membroInput, setMembroInput] = useState("");
   const [filmeInput, setFilmeInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
-  // data fetching
+  const userId =
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+
+  useEffect(() => {
+    if (!userId) router.push("/login");
+  }, [router]);
+
   const { data, isLoading, mutate } = useSWR(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/grupos/allGrupos`,
     fetcher
   );
 
-  // effects
-  useEffect(() => {
-    if (!userId) router.push("/login");
-  }, [router, userId]);
+  const { data: perfisData } = useSWR(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/perfis/all`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
 
-  // event handlers
+  const { data: filmesData } = useSWR(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/filmes/allFilmes`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const grupos = useMemo(() => Array.isArray(data) ? data : [], [data]);
+
+  const filtrados = useMemo(() => {
+    if (!busca.trim()) return grupos;
+    return grupos.filter((g) =>
+      g.nome?.toLowerCase().includes(busca.toLowerCase())
+    );
+  }, [busca, grupos]);
+
   const handleChange = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -96,6 +119,7 @@ export default function GruposPage() {
     try {
       await deleteGrupo(id);
       setMessage({ text: "Grupo removido com sucesso.", type: "success" });
+      if (expandidoId === id) setExpandidoId(null);
       mutate();
     } catch (error) {
       console.error(error);
@@ -109,8 +133,12 @@ export default function GruposPage() {
     setFilmeInput("");
   };
 
+  const toggleExpandir = (id) => {
+    setExpandidoId((prev) => (prev === id ? null : id));
+  };
+
   const handleAdicionarMembro = async (grupoId) => {
-    if (!membroInput) return;
+  if (!membroInput.trim()) return;
     try {
       await adicionarMembro(grupoId, Number(membroInput));
       setMessage({ text: "Membro adicionado com sucesso.", type: "success" });
@@ -134,7 +162,7 @@ export default function GruposPage() {
   };
 
   const handleAdicionarFilme = async (grupoId) => {
-    if (!filmeInput) return;
+    if (!filmeInput.trim()) return;
     try {
       await adicionarFilme(grupoId, Number(filmeInput));
       setMessage({ text: "Filme adicionado com sucesso.", type: "success" });
@@ -157,21 +185,6 @@ export default function GruposPage() {
     }
   };
 
-  // computed data
-  const userId =
-    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
-
-  const grupos = Array.isArray(data) ? data : [];
-
-  const filtrados = useMemo(() => {
-    const grupos = Array.isArray(data) ? data : [];
-    if (!busca.trim()) return grupos;
-    return grupos.filter((g) =>
-      g.nome?.toLowerCase().includes(busca.toLowerCase())
-    );
-  }, [busca, data]);
-
-  // jsx render
   return (
     <div className={styles.containerGrupos}>
 
@@ -180,7 +193,9 @@ export default function GruposPage() {
           <div>
             <h2>{editandoId ? "Editar Grupo" : "Criar Grupo"}</h2>
             <p className={styles.subtitulo}>
-              {editandoId ? "Atualize as informações do grupo" : "Crie um novo grupo para reunir amigos e filmes"}
+              {editandoId
+                ? "Atualize as informações do grupo"
+                : "Crie um novo grupo para reunir amigos e filmes"}
             </p>
           </div>
         </div>
@@ -242,17 +257,27 @@ export default function GruposPage() {
           <div className={styles.listaGrupos}>
             {filtrados.map((grupo) => (
               <div key={grupo.id} className={styles.cardGrupo}>
+
                 <div className={styles.cardGrupoTopo}>
-                  <div>
-                    <p className={styles.cardGrupoTitulo}>{grupo.nome}</p>
-                    {grupo.descricao && (
-                      <p className={styles.cardGrupoDescricao}>{grupo.descricao}</p>
-                    )}
-                    <p className={styles.cardGrupoDetalhe}>
-                      {grupo.membros?.length || 0} membro(s) •{" "}
-                      {grupo.filmes?.length || 0} filme(s)
-                    </p>
+                  <div
+                    className={styles.cardGrupoHeader}
+                    onClick={() => toggleExpandir(grupo.id)}
+                  >
+                    <div className={styles.cardGrupoNomeArea}>
+                      <p className={styles.cardGrupoTitulo}>{grupo.nome}</p>
+                      {grupo.descricao && (
+                        <p className={styles.cardGrupoDescricao}>{grupo.descricao}</p>
+                      )}
+                      <p className={styles.cardGrupoDetalhe}>
+                        {grupo.membros?.length || 0} membro(s) •{" "}
+                        {grupo.filmes?.length || 0} filme(s)
+                      </p>
+                    </div>
+                    <span className={styles.chevron}>
+                      {expandidoId === grupo.id ? "▲" : "▼"}
+                    </span>
                   </div>
+
                   <div className={styles.cardGrupoAcoes}>
                     <button className={styles.botaoEditar} onClick={() => handleEditar(grupo)}>
                       Editar
@@ -266,16 +291,68 @@ export default function GruposPage() {
                   </div>
                 </div>
 
+                {/* conteúdo expandido com animação */}
+                <AnimatePresence initial={false}>
+                  {expandidoId === grupo.id && (
+                    <motion.div
+                      key="expandido"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      style={{ overflow: "hidden" }}
+                    >
+                      <div className={styles.expandidoInner}>
+                        <div className={styles.expandidoContent}>
+
+                          <div className={styles.expandidoSection}>
+                            <p className={styles.expandidoSectionTitle}>Membros</p>
+                            {grupo.membros?.length > 0 ? (
+                              <div className={styles.membrosLista}>
+                                {grupo.membros.map((m) => (
+                                  <span key={m.id} className={styles.membroTag}>
+                                    {m.username || `Usuário #${m.id}`}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className={styles.vazioSection}>Nenhum membro neste grupo.</p>
+                            )}
+                          </div>
+
+                          <div className={styles.expandidoSection}>
+                            <p className={styles.expandidoSectionTitle}>Filmes</p>
+                            {grupo.filmes?.length > 0 ? (
+                              <div className={styles.filmesGrid}>
+                                {grupo.filmes.map((f) => (
+                                  <div key={f.id} className={styles.filmeCard}>
+                                    <FilmePoster titulo={f.titulo} />
+                                    <p className={styles.filmeTitulo}>{f.titulo}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className={styles.vazioSection}>Nenhum filme adicionado ainda.</p>
+                            )}
+                          </div>
+
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* painel de gerenciamento */}
                 {gerenciandoId === grupo.id && (
                   <div className={styles.painelGerenciar}>
 
                     <div className={styles.secaoGerenciar}>
-                      <p className={styles.secaoTitulo}>Membros</p>
+                      <p className={styles.secaoTitulo}>Adicionar membro</p>
                       <div className={styles.linhaAdicionar}>
                         <input
                           value={membroInput}
                           onChange={(e) => setMembroInput(e.target.value)}
-                          placeholder="ID do perfil"
+                          placeholder="Username do membro"
                           className={styles.inputGerenciar}
                         />
                         <button
@@ -289,12 +366,12 @@ export default function GruposPage() {
                         <div className={styles.listaTags}>
                           {grupo.membros.map((m) => (
                             <span key={m.id} className={styles.tag}>
-                              Perfil #{m.id}
+                              {m.username || `Usuário #${m.id}`}
                               <button
                                 className={styles.tagRemover}
                                 onClick={() => handleRemoverMembro(grupo.id, m.id)}
                               >
-                                x
+                                ×
                               </button>
                             </span>
                           ))}
@@ -303,12 +380,12 @@ export default function GruposPage() {
                     </div>
 
                     <div className={styles.secaoGerenciar}>
-                      <p className={styles.secaoTitulo}>Filmes</p>
+                      <p className={styles.secaoTitulo}>Adicionar filme</p>
                       <div className={styles.linhaAdicionar}>
                         <input
                           value={filmeInput}
                           onChange={(e) => setFilmeInput(e.target.value)}
-                          placeholder="ID do filme"
+                          placeholder="Nome do filme"
                           className={styles.inputGerenciar}
                         />
                         <button
@@ -327,7 +404,7 @@ export default function GruposPage() {
                                 className={styles.tagRemover}
                                 onClick={() => handleRemoverFilme(grupo.id, f.id)}
                               >
-                                x
+                                ×
                               </button>
                             </span>
                           ))}
@@ -337,6 +414,7 @@ export default function GruposPage() {
 
                   </div>
                 )}
+
               </div>
             ))}
           </div>
