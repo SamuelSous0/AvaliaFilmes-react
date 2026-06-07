@@ -94,6 +94,9 @@ export default function Navbar() {
         <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
           <Link href="/profile">Meu Perfil</Link>
         </motion.li>
+        <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+          <Link href="/favoritos">Favoritos</Link>
+        </motion.li>
       </ul>
 
       <div className={styles.navbarUsuario}>
