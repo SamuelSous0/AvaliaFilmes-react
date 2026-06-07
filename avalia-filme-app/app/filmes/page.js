@@ -4,6 +4,12 @@ import { useRouter } from "next/navigation";
 import { getAllFilmes, updateFilme } from "../../services/filmeApi";
 import styles from "./filmes.module.css";
 
+import {
+  getFavoritosByUser,
+  addFavorito,
+  deleteFavorito,
+} from "../../services/favoritoApi";
+
 const initialForm = { rating: "", review: "" };
 const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 
@@ -31,6 +37,9 @@ export default function FilmesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
+  const [userId, setUserId] = useState(null);
+  const [favoritos, setFavoritos] = useState([]);
+  const [favoritandoId, setFavoritandoId] = useState(null);
 
   const loadFilmes = async () => {
     try {
@@ -56,10 +65,54 @@ export default function FilmesPage() {
     }
   };
 
+    const loadFavoritos = async (id) => {
+  try {
+    const data = await getFavoritosByUser(id);
+    setFavoritos(Array.isArray(data) ? data : []);
+  } catch (error) {
+    console.error("Erro ao carregar favoritos:", error);
+  }
+};
+
+const verificarFavorito = (filmeId) => {
+  return favoritos.find((fav) => fav.filme?.id === filmeId);
+};
+
+const handleFavorito = async (filme) => {
+  if (!userId) return;
+
+  const favoritoExistente = verificarFavorito(filme.id);
+
+  try {
+    setFavoritandoId(filme.id);
+
+    if (favoritoExistente) {
+      await deleteFavorito(favoritoExistente.id);
+      setMessage({ text: "Filme removido dos favoritos.", type: "success" });
+    } else {
+      await addFavorito(userId, filme.id);
+      setMessage({ text: "Filme adicionado aos favoritos.", type: "success" });
+    }
+
+    await loadFavoritos(userId);
+  } catch (error) {
+    console.error(error);
+    setMessage({
+      text: "Erro ao atualizar favorito.",
+      type: "error",
+    });
+  } finally {
+    setFavoritandoId(null);
+  }
+};
+
   useEffect(() => {
     const id = localStorage.getItem("userId");
     if (!id) { router.push("/login"); return; }
+
+    setUserId(id);
     loadFilmes();
+    loadFavoritos(id)
   }, [router]);
 
   useEffect(() => {
@@ -108,6 +161,7 @@ export default function FilmesPage() {
     } finally {
       setSaving(false);
     }
+    
   };
 
   return (
@@ -147,6 +201,25 @@ export default function FilmesPage() {
         ) : (
           filtrados.map((filme) => (
             <div key={filme.id} className={styles.cardFilme}>
+              <button
+               className={`${styles.botaoFavorito} ${
+                verificarFavorito(filme.id) ? styles.favoritado : ""
+              }`}
+              onClick={() => handleFavorito(filme)}
+              disabled={favoritandoId === filme.id}
+              title={
+                verificarFavorito(filme.id)
+                  ? "Remover dos favoritos"
+                  : "Adicionar aos favoritos"
+              }
+              >
+                {favoritandoId === filme.id
+                 ? "..."
+                 : verificarFavorito(filme.id)
+                 ? "★"
+                 : "☆"}
+              </button>
+
               <div className={styles.cardFilmeTopo}>
                 {posters[filme.id] && (
                   <img
