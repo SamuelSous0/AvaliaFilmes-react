@@ -1,0 +1,74 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.mediaLinha,
+.avaliarLinha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mediaLabel,
+.avaliarLabel {
+  color: #888;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  min-width: 60px;
+}
+
+.estrelas {
+  display: flex;
+  gap: 2px;
+  font-size: 1.2rem;
+}
+
+.estrelaAtiva {
+  color: var(--accent-color);
+}
+
+.estrelaVazia {
+  color: #444;
+}
+
+.mediaValor {
+  color: var(--accent-color);
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.botaoRemover {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.botaoRemover:hover {
+  color: var(--primary-color);
+}
+
+.mensagem {
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.sucesso {
+  background: rgba(40, 167, 69, 0.12);
+  color: #28a745;
+}
+
+.erro {
+  background: rgba(229, 9, 20, 0.12);
+  color: var(--primary-color);
+}
