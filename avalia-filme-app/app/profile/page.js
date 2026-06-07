@@ -73,8 +73,11 @@ export default function ProfilePage() {
         photoUrl: meuPerfil?.fotoUrl || ""
       });
 
-      if (meuPerfil) setPerfilId(meuPerfil.id);
-
+      if (meuPerfil) {
+        setPerfilId(meuPerfil.id);
+        localStorage.setItem("perfilId", meuPerfil.id);
+      }
+  
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
