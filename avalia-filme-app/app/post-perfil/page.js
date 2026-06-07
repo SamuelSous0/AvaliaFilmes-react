@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAllPostPerfis, savePostPerfil, updatePostPerfil, deletePostPerfil } from "@/services/postperfilApi";
+import useSWR from "swr";
+import { savePostPerfil, updatePostPerfil, deletePostPerfil } from "@/services/postperfilApi";
 import { getAllFilmes } from "@/services/filmeApi";
 import styles from "./postPerfil.module.css";
 
@@ -19,69 +20,69 @@ async function buscarPoster(titulo) {
         return null;
     }   
 }
+const fetcher = (url) =>
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1${url}`).then((res)=> res.json());
 
 const initialForm= {descricao: "", filmeId: ""};
 
 export default function PostPerfilPage(){
     const router = useRouter();
-    const [posts, setPosts] = useState([]);
     const [filmes, setFilmes] = useState([]);
-    const [posters, setPosters] = useState([]);
+    const [posters, setPosters] = useState({});
     const [form, setForm ] = useState(initialForm);
     const [editandoId, setEditandoId] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState({ text: " ", type: " "});
+    const [message, setMessage] = useState({ text: "", type: ""});
 
-    const loadData = async () => {
-        try {
-            setLoading(true);
-            const [postsData, filmesData] = await Promise.all([
-                getAllPostPerfis(),
-                getAllFilmes()
-            ]);
-            
-            const postsList = Array.isArray(postsData) ? postsData : [];
-            const filmesList = Array.isArray(filmesData) ? filmesData : [];
-
-            setPosts(postsList);
-            setFilmes(filmesList);
-
-            const postersMap= {};
-            await Promise.all(
-                postsList.map(async(post)=>{
-                    if (post.filme?.titulo) {
-                        const url = await buscarPoster(post.filme.titulo);
-                        if (url) postersMap[post.filme.id] = url;
-                    }
-                })
-            );
-            setPosters(postersMap);
-        } catch (error){
-            console.error(error);
-            setMessage({text: "Falha ao carregar posts.", type: "error"});
-        } finally {
-            setLoading(false);
-        }
-    };
+    // para buscar posts
+    const { data: posts, isLoading, mutate } = useSWR("/post-perfil", fetcher, {
+        fallbackData: []
+    });
     useEffect(()=>
     {
         const id = localStorage.getItem("userId");
-        if (!id) { router.push("/login"); return;}
-        loadData();
+        if (!id) { router.push("/login"); return; }
+        loadFilmes();
     }, [router]);
     
+    useEffect(() => {
+        if (posts && posts.length > 0) {
+            carregarPosters(posts);
+        }
+    }, [posts]);
+
+    const loadFilmes = async () => {
+        try {
+            const data = await getAllFilmes();
+            setFilmes(Array.isArray(data)? data : []);
+        } catch (error){
+            console.error(error);
+        }
+    };
+    const carregarPosters = async (postsList) => {
+        const postersMap ={};
+        await Promise.all(
+            postsList.map(async (post) =>{
+                if (post.filme?.titulo){
+                    const url = await buscarPoster(post.filme.titulo);
+                    if(url) postersMap[post.filme.id] = url;
+                }
+            })
+        );
+        setPosters(postersMap);
+    }
+
     const handleChange = (field, value) => setForm (prev=> ({...prev, [field]: value}));
 
     const abrirEdicao = (post) => {
         setEditandoId(post.id);
-        setForm({ descricao: post.descricao || " ", filmeId: String(post.filme?.id || " ") });
+        setForm({ descricao: post.descricao || "", filmeId: String(post.filme?.id || "") });
     };
 
     const cancelarEdicao= ()=> {
         setEditandoId(null);
         setForm(initialForm);
-        setMessage({ text: " ", type: " "});
+        setMessage({ text: "", type: ""});
     };
 
     const handleSalvar = async ()=> {
@@ -96,6 +97,7 @@ export default function PostPerfilPage(){
             perfil: { id: Number(perfilId) },
             filme: { id: Number(form.filmeId) }
         };
+        console.log("payload:", payload);
 
         try {
             setSaving(true);
@@ -108,7 +110,7 @@ export default function PostPerfilPage(){
                 setMessage({ text: "Post criado com sucesso!", type: "success"});
                 setForm(initialForm);
             }
-            loadData();
+            mutate(); // swr recarrega os post aut.
         } catch (error) {
             console.error(error);
             setMessage({ text: "Erro ao salvar o post.", type: "error"});
@@ -122,7 +124,7 @@ export default function PostPerfilPage(){
         try {
         await deletePostPerfil(id);
         setMessage({ text: "Post deletado com sucesso!", type: "success"});
-        loadData();
+        mutate();
         } catch {
         setMessage({ text: "Erro ao deletar post.", type: "error"});
         }
@@ -147,7 +149,7 @@ export default function PostPerfilPage(){
                             value={form.filmeId}
                             onChange={e => handleChange("filmeId", e.target.value)}
                         >
-                            <option value=" "> Selecione um filme</option>
+                            <option value=""> Selecione um filme</option>
                             {filmes.map(filme => (
                                 <option key={filme.id} value = {filme.id}> {filme.titulo}</option>
                             ))}
@@ -179,7 +181,7 @@ export default function PostPerfilPage(){
                     </div>
                 </div>
                 {/*feed de posts*/}
-                {loading ? (
+                {isLoading ? (
                     <div className={styles.carregando}>Carregando posts...</div>
                 ) : posts.length === 0 ? (
                     <p className={styles.semPosts}> Nenhum post foi encontrado.</p>
@@ -217,4 +219,4 @@ export default function PostPerfilPage(){
                 )}
             </div>
         );
-    }
+}
