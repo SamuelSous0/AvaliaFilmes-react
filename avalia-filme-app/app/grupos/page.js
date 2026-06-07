@@ -1,12 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
 import {
-  getAllGrupos,
   saveGrupo,
   updateGrupo,
   deleteGrupo,
-  buscarGruposPorNome,
   adicionarMembro,
   removerMembro,
   adicionarFilme,
@@ -14,53 +13,39 @@ import {
 } from "../../services/grupoApi";
 import styles from "./grupos.module.css";
 
+const fetcher = (url) => fetch(url).then((res) => res.json());
 const initialForm = { nome: "", descricao: "" };
 
 export default function GruposPage() {
   const router = useRouter();
-  const [grupos, setGrupos] = useState([]);
-  const [filtrados, setFiltrados] = useState([]);
   const [busca, setBusca] = useState("");
   const [form, setForm] = useState(initialForm);
   const [editandoId, setEditandoId] = useState(null);
   const [gerenciandoId, setGerenciandoId] = useState(null);
   const [membroInput, setMembroInput] = useState("");
   const [filmeInput, setFilmeInput] = useState("");
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
   const userId =
     typeof window !== "undefined" ? localStorage.getItem("userId") : null;
 
-  const loadGrupos = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllGrupos();
-      const lista = Array.isArray(data) ? data : [];
-      setGrupos(lista);
-      setFiltrados(lista);
-    } catch (error) {
-      console.error(error);
-      setMessage({ text: "Falha ao carregar grupos.", type: "error" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (!userId) { router.push("/login"); return; }
-    loadGrupos();
+    if (!userId) router.push("/login");
   }, [router]);
 
-  useEffect(() => {
-    if (!busca.trim()) {
-      setFiltrados(grupos);
-    } else {
-      setFiltrados(grupos.filter((g) =>
-        g.nome?.toLowerCase().includes(busca.toLowerCase())
-      ));
-    }
+  const { data, isLoading, mutate } = useSWR(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/grupos/allGrupos`,
+    fetcher
+  );
+
+  const grupos = Array.isArray(data) ? data : [];
+
+  const filtrados = useMemo(() => {
+    if (!busca.trim()) return grupos;
+    return grupos.filter((g) =>
+      g.nome?.toLowerCase().includes(busca.toLowerCase())
+    );
   }, [busca, grupos]);
 
   const handleChange = (field, value) =>
@@ -74,15 +59,15 @@ export default function GruposPage() {
     try {
       setSaving(true);
       const payload = {
-    ...form,
-    criador: { 
-      id: Number(userId),
-      username: localStorage.getItem("username") || "",
-      email: "placeholder@email.com",
-      password: "placeholder",
-      age: 0
-    },
-  };
+        ...form,
+        criador: {
+          id: Number(userId),
+          username: localStorage.getItem("username") || "",
+          email: "placeholder@email.com",
+          password: "placeholder",
+          age: 0,
+        },
+      };
       if (editandoId) {
         await updateGrupo(editandoId, payload);
         setMessage({ text: "Grupo atualizado com sucesso.", type: "success" });
@@ -92,7 +77,7 @@ export default function GruposPage() {
       }
       setForm(initialForm);
       setEditandoId(null);
-      loadGrupos();
+      mutate();
     } catch (error) {
       console.error(error);
       setMessage({ text: "Erro ao salvar grupo.", type: "error" });
@@ -118,7 +103,7 @@ export default function GruposPage() {
     try {
       await deleteGrupo(id);
       setMessage({ text: "Grupo removido com sucesso.", type: "success" });
-      loadGrupos();
+      mutate();
     } catch (error) {
       console.error(error);
       setMessage({ text: "Erro ao remover grupo.", type: "error" });
@@ -137,7 +122,7 @@ export default function GruposPage() {
       await adicionarMembro(grupoId, Number(membroInput));
       setMessage({ text: "Membro adicionado com sucesso.", type: "success" });
       setMembroInput("");
-      loadGrupos();
+      mutate();
     } catch (error) {
       console.error(error);
       setMessage({ text: "Erro ao adicionar membro.", type: "error" });
@@ -148,7 +133,7 @@ export default function GruposPage() {
     try {
       await removerMembro(grupoId, perfilId);
       setMessage({ text: "Membro removido com sucesso.", type: "success" });
-      loadGrupos();
+      mutate();
     } catch (error) {
       console.error(error);
       setMessage({ text: "Erro ao remover membro.", type: "error" });
@@ -161,7 +146,7 @@ export default function GruposPage() {
       await adicionarFilme(grupoId, Number(filmeInput));
       setMessage({ text: "Filme adicionado com sucesso.", type: "success" });
       setFilmeInput("");
-      loadGrupos();
+      mutate();
     } catch (error) {
       console.error(error);
       setMessage({ text: "Erro ao adicionar filme.", type: "error" });
@@ -172,7 +157,7 @@ export default function GruposPage() {
     try {
       await removerFilme(grupoId, filmeId);
       setMessage({ text: "Filme removido com sucesso.", type: "success" });
-      loadGrupos();
+      mutate();
     } catch (error) {
       console.error(error);
       setMessage({ text: "Erro ao remover filme.", type: "error" });
@@ -241,7 +226,7 @@ export default function GruposPage() {
           className={styles.inputBusca}
         />
 
-        {loading ? (
+        {isLoading ? (
           <div className={styles.carregando}>Carregando grupos...</div>
         ) : filtrados.length === 0 ? (
           <div className={styles.vazio}>Nenhum grupo encontrado.</div>
