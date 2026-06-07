@@ -1,0 +1,359 @@
+.containerGrupos {
+  min-height: calc(100vh - 70px);
+  padding: 3rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  background-color: var(--bg-dark);
+}
+
+.cartaoGrupos {
+  background-color: var(--bg-card);
+  border-radius: 12px;
+  border: 1px solid #333;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+  padding: 2rem;
+}
+
+.cabecalho {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.cabecalho h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.subtitulo {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.formulario {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.grupoFormulario {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grupoFormulario label {
+  color: #888;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.grupoFormulario input,
+.grupoFormulario textarea {
+  background-color: #262626;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.grupoFormulario input:focus,
+.grupoFormulario textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  background-color: #2a2a2a;
+}
+
+.grupoFormulario textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.acoes {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.botaoSalvar {
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.2s;
+}
+
+.botaoSalvar:hover {
+  background-color: #b20710;
+}
+
+.botaoCancelar {
+  background-color: transparent;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.botaoCancelar:hover {
+  border-color: #fff;
+}
+
+.mensagem {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.sucesso {
+  background: rgba(40, 167, 69, 0.12);
+  color: #28a745;
+}
+
+.erro {
+  background: rgba(229, 9, 20, 0.12);
+  color: var(--primary-color);
+}
+
+.listaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.listaHeader h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.listaHeader span {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.inputBusca {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+}
+
+.listaGrupos {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cardGrupo {
+  background-color: #181818;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cardGrupoTopo {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.cardGrupoTitulo {
+  margin: 0;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.cardGrupoDescricao {
+  margin: 0.4rem 0 0;
+  color: #ddd;
+  line-height: 1.6;
+}
+
+.cardGrupoDetalhe {
+  margin: 0.4rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.cardGrupoAcoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.botaoEditar {
+  background-color: transparent;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.botaoEditar:hover {
+  background-color: rgba(255, 204, 0, 0.1);
+}
+
+.botaoGerenciar {
+  background-color: transparent;
+  border: 1px solid #555;
+  color: #ccc;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.botaoGerenciar:hover {
+  border-color: #fff;
+  color: #fff;
+}
+
+.botaoExcluir {
+  background-color: var(--danger);
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.botaoExcluir:hover {
+  opacity: 0.9;
+}
+
+.painelGerenciar {
+  border-top: 1px solid #333;
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.secaoGerenciar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.secaoTitulo {
+  margin: 0;
+  color: #888;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.linhaAdicionar {
+  display: flex;
+  gap: 10px;
+}
+
+.inputGerenciar {
+  flex: 1;
+  background-color: #262626;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.inputGerenciar:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.botaoAdicionar {
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.botaoAdicionar:hover {
+  background-color: #b20710;
+}
+
+.listaTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  color: #ccc;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tagRemover {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.tagRemover:hover {
+  color: var(--primary-color);
+}
+
+.carregando,
+.vazio {
+  color: var(--accent-color);
+  padding: 1.5rem;
+  background-color: #121212;
+  border: 1px solid #333;
+  border-radius: 12px;
+}
