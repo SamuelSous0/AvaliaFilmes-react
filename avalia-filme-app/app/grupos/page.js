@@ -18,6 +18,8 @@ const initialForm = { nome: "", descricao: "" };
 
 export default function GruposPage() {
   const router = useRouter();
+
+  // state management
   const [busca, setBusca] = useState("");
   const [form, setForm] = useState(initialForm);
   const [editandoId, setEditandoId] = useState(null);
@@ -27,27 +29,18 @@ export default function GruposPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
-  const userId =
-    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
-
-  useEffect(() => {
-    if (!userId) router.push("/login");
-  }, [router]);
-
+  // data fetching
   const { data, isLoading, mutate } = useSWR(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/grupos/allGrupos`,
     fetcher
   );
 
-  const grupos = Array.isArray(data) ? data : [];
+  // effects
+  useEffect(() => {
+    if (!userId) router.push("/login");
+  }, [router, userId]);
 
-  const filtrados = useMemo(() => {
-    if (!busca.trim()) return grupos;
-    return grupos.filter((g) =>
-      g.nome?.toLowerCase().includes(busca.toLowerCase())
-    );
-  }, [busca, grupos]);
-
+  // event handlers
   const handleChange = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -164,6 +157,21 @@ export default function GruposPage() {
     }
   };
 
+  // computed data
+  const userId =
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+
+  const grupos = Array.isArray(data) ? data : [];
+
+  const filtrados = useMemo(() => {
+    const grupos = Array.isArray(data) ? data : [];
+    if (!busca.trim()) return grupos;
+    return grupos.filter((g) =>
+      g.nome?.toLowerCase().includes(busca.toLowerCase())
+    );
+  }, [busca, data]);
+
+  // jsx render
   return (
     <div className={styles.containerGrupos}>
 
@@ -286,7 +294,7 @@ export default function GruposPage() {
                                 className={styles.tagRemover}
                                 onClick={() => handleRemoverMembro(grupo.id, m.id)}
                               >
-                                ×
+                                x
                               </button>
                             </span>
                           ))}
@@ -319,7 +327,7 @@ export default function GruposPage() {
                                 className={styles.tagRemover}
                                 onClick={() => handleRemoverFilme(grupo.id, f.id)}
                               >
-                                ×
+                                x
                               </button>
                             </span>
                           ))}
