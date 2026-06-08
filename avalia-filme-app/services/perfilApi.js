@@ -19,3 +19,8 @@ export async function savePerfil(perfilData) {
   const response = await instance.post("/perfis/add", perfilData);
   return response.data;
 }
+
+export async function deletePerfil(id) {
+  const response = await instance.delete(`/perfis/${id}`);
+  return response.data;
+}
