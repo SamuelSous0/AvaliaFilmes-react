@@ -83,6 +83,7 @@ export default function FavoritosPage() {
   }, []);
 
   useEffect(() => {
+    
     const id = localStorage.getItem("userId");
 
     if (!id) {
@@ -90,6 +91,7 @@ export default function FavoritosPage() {
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     carregarFavoritos(id);
   }, [router, carregarFavoritos]);
 
@@ -97,6 +99,7 @@ export default function FavoritosPage() {
     const termo = busca.toLowerCase().trim();
 
     if (!termo) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFiltrados(favoritos);
       return;
     }
