@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import FilmePoster from "../components/FilmePoster/FilmePoster";
@@ -17,6 +17,16 @@ const initialForm = {
   comentario: "",
 };
 
+const encontrarPerfilDoUsuario = (perfis, nomeUsuario) => {
+  if (!Array.isArray(perfis)) return null;
+
+  return perfis.find(
+    (perfil) => perfil.username === nomeUsuario || perfil.user?.username === nomeUsuario
+  );
+};
+
+const aguardar = (tempoEmMs) => new Promise((resolve) => setTimeout(resolve, tempoEmMs));
+
 export default function ReviewsPage() {
   const router = useRouter();
   const [perfilId, setPerfilId] = useState(null);
@@ -29,7 +39,7 @@ export default function ReviewsPage() {
   const [saving, setSaving] = useState(false);
   const [removingId, setRemovingId] = useState(null);
   const [message, setMessage] = useState({ text: "", type: "" });
-
+  const criandoPerfilRef = useRef(false);
   const carregarDados = useCallback(async () => {
     try {
       setLoading(true);
@@ -50,21 +60,30 @@ export default function ReviewsPage() {
       ]);
 
       const nomeUsuario = userData?.name || username;
-      let perfilLogado = Array.isArray(perfisData)
-        ? perfisData.find((perfil) => perfil.username === nomeUsuario || perfil.user?.username === nomeUsuario)
-        : null;
+      let perfilLogado = encontrarPerfilDoUsuario(perfisData, nomeUsuario);
 
       if (!perfilLogado?.id) {
-        perfilLogado = await savePerfil({
-          userId: Number(userId),
-          biografia: "",
-          fotoUrl: "",
-        });
+        try {
+          if (criandoPerfilRef.current) {
+            await aguardar(500);
+          } else {
+            criandoPerfilRef.current = true;
+            perfilLogado = await savePerfil({
+              userId: Number(userId),
+              biografia: "",
+              fotoUrl: "",
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao criar perfil inicial:", error);
+        } finally {
+          criandoPerfilRef.current = false;
+        }
 
-        setMessage({
-          text: "Perfil inicial criado automaticamente. Você já pode publicar reviews.",
-          type: "success",
-        });
+        if (!perfilLogado?.id) {
+          const perfisAtualizados = await getAllPerfis();
+          perfilLogado = encontrarPerfilDoUsuario(perfisAtualizados, nomeUsuario);
+        }
       }
 
       if (perfilLogado?.id) {
@@ -83,7 +102,6 @@ export default function ReviewsPage() {
   }, [router]);
 
   useEffect(() => {
-    // O padrão já é usado em outras páginas do projeto para buscar dados no carregamento.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     carregarDados();
   }, [carregarDados]);
@@ -350,7 +368,7 @@ function ReviewCard({ review, isMine = false, removing = false, onRemove }) {
 
         <h3>{review.filmeTitulo || "Filme sem título"}</h3>
 
-        <div className={styles.ratingLine} aria-label={`Nota ${review.nota} de 5.0`}>
+        <div className={styles.ratingLine} aria-label={`Nota ${Number(review.nota).toFixed(1)} de 5.0`}>
           <span className={styles.ratingStars}>{renderStars(review.nota)}</span>
           <strong>{Number(review.nota).toFixed(1)}/5.0</strong>
         </div>
