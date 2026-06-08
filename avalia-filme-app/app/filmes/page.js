@@ -351,7 +351,7 @@ export default function FilmesPage() {
         )}
 
         <div className={styles.formulario}>
-          <p className={styles.subtitulo}>Selecione um filme abaixo para avaliar. A nota e o comentário aparecerão também em Minhas reviews.</p>
+          <p className={styles.subtitulo}>Selecione um filme abaixo para avaliar.</p>
         </div>
       </div>
 
