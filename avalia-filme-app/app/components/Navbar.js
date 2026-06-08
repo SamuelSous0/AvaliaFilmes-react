@@ -11,6 +11,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [username, setUsername] = useState("");
   const [isLogged, setIsLogged] = useState(false);
+  const [userId, setUserId] = useState("");
 
   useEffect(() => {
     // Função para verificar o estado do login
@@ -20,9 +21,11 @@ export default function Navbar() {
       if (id && name) {
         setIsLogged(true);
         setUsername(name);
+        setUserId(id);
       } else {
         setIsLogged(false);
         setUsername("");
+        setUserId("");
       }
     };
 
@@ -33,6 +36,7 @@ export default function Navbar() {
     localStorage.clear();
     setIsLogged(false);
     setUsername("");
+    setUserId("");
     router.push("/login");
   };
 
@@ -109,7 +113,7 @@ export default function Navbar() {
       </ul>
 
       <div className={styles.navbarUsuario}>
-        <span>Olá, {username}</span>
+        <span>Olá, {username} #{userId}</span>
         <motion.button 
           onClick={handleLogout} 
           className={styles.botaoSairNavbar}

@@ -203,6 +203,8 @@ export default function PostPerfilPage(){
                                     </div>
                                     <p className={styles.filmeNome}>{post.filme?.titulo}</p>
                                     <p className={styles.genero}> {post.filme?.genero}</p>
+                                    <p className={styles.diretor}>
+                                        🎬 Diretor: {post.filme?.diretor}</p>
                             </div>
                         </div>
                         <p className={styles.descricao}>{post.descricao}</p>
