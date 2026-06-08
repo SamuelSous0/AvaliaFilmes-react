@@ -101,10 +101,10 @@ export default function Navbar() {
           <Link href="/post-perfil">Posts</Link>
         </motion.li>
         <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-          <Link href="/profile">Meu Perfil</Link>
+          <Link href="/favoritos">Favoritos</Link>
         </motion.li>
         <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-          <Link href="/favoritos">Favoritos</Link>
+          <Link href="/profile">Meu Perfil</Link>
         </motion.li>
       </ul>
 

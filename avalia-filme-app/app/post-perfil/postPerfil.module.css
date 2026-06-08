@@ -214,3 +214,157 @@
     height: 100vh;
     color: #aaa;
 }
+
+.container {
+  max-width: none;
+  min-height: 100vh;
+  padding: 3rem 5%;
+  background:
+    radial-gradient(circle at top left, rgba(229, 9, 20, 0.18), transparent 34rem),
+    radial-gradient(circle at top right, rgba(255, 204, 0, 0.12), transparent 26rem),
+    var(--bg-dark);
+  color: var(--text-main);
+}
+
+.titulo {
+  margin: 0 0 1.5rem;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.96), rgba(10, 10, 10, 0.9));
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  color: var(--primary-color);
+  font-size: clamp(2.2rem, 6vw, 4rem);
+  line-height: 1;
+}
+
+.formulario,
+.card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(26, 26, 26, 0.94);
+  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.35);
+}
+
+.formulario {
+  padding: 1.4rem;
+  margin-bottom: 1.5rem;
+}
+
+.formulario h2 {
+  margin-top: 0;
+  color: var(--text-main);
+  font-size: 1.6rem;
+}
+
+.grupoFormulario label {
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.grupoFormulario input,
+.grupoFormulario select,
+.grupoFormulario textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: #111;
+  color: var(--text-main);
+  outline: none;
+  padding: 0.9rem 1rem;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.grupoFormulario input:focus,
+.grupoFormulario select:focus,
+.grupoFormulario textarea:focus {
+  border-color: rgba(255, 204, 0, 0.65);
+  box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.08);
+}
+
+.card {
+  background: #101010;
+  border-radius: 14px;
+  padding: 1rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  border-color: rgba(229, 9, 20, 0.35);
+  transform: translateY(-2px);
+}
+
+.cardTopo,
+.cardHeader {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.cardHeader {
+  justify-content: space-between;
+}
+
+.perfilNome,
+.genero,
+.data {
+  color: var(--accent-color);
+}
+
+.filmeNome {
+  color: var(--text-main);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.descricao {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.botaoSalvar,
+.botaoCancelar,
+.botaoEditar,
+.botaoDeletar {
+  border-radius: 10px;
+  font-weight: 800;
+  transition: transform 0.2s, filter 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.botaoSalvar {
+  background: var(--primary-color);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(229, 9, 20, 0.25);
+}
+
+.botaoSalvar:hover { filter: brightness(1.08); }
+
+.botaoCancelar,
+.botaoEditar {
+  background: transparent;
+  color: var(--accent-color);
+  border: 1px solid rgba(255, 204, 0, 0.35);
+}
+
+.botaoDeletar {
+  background: rgba(229, 9, 20, 0.12);
+  color: #ff6b6b;
+  border: 1px solid rgba(229, 9, 20, 0.35);
+}
+
+.semPosts,
+.carregando,
+.mensagem {
+  border-radius: 12px;
+}
+
+@media (max-width: 720px) {
+  .container { padding: 2rem 1rem; }
+  .titulo { padding: 1.5rem; }
+  .cardHeader { flex-direction: column; gap: 0.35rem; }
+}

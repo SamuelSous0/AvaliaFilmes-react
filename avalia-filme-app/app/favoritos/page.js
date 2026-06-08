@@ -138,7 +138,6 @@ export default function FavoritosPage() {
         <div className={styles.heroGlowSecondary} aria-hidden="true" />
 
         <div className={styles.heroContent}>
-          <p className={styles.heroEyebrow}>AvaliaFilmes</p>
           <h1 className={styles.heroTitle}>Meus Favoritos</h1>
           <p className={styles.heroSubtitle}>
             Sua coleção pessoal dos filmes que mais marcaram sua experiência.
