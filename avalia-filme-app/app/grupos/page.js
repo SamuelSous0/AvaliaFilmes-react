@@ -28,6 +28,8 @@ export default function GruposPage() {
   const [expandidoId, setExpandidoId] = useState(null);
   const [membroInput, setMembroInput] = useState("");
   const [filmeInput, setFilmeInput] = useState("");
+  const [filmeSelecionado, setFilmeSelecionado] = useState(null);
+  const [filmeSugestoes, setFilmeSugestoes] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
@@ -131,10 +133,33 @@ export default function GruposPage() {
     setGerenciandoId((prev) => (prev === id ? null : id));
     setMembroInput("");
     setFilmeInput("");
+    setFilmeSelecionado(null);
+    setFilmeSugestoes([]);
   };
 
   const toggleExpandir = (id) => {
     setExpandidoId((prev) => (prev === id ? null : id));
+  };
+
+  const handleFilmeInputChange = (valor) => {
+    setFilmeInput(valor);
+    setFilmeSelecionado(null);
+    if (!valor.trim()) {
+      setFilmeSugestoes([]);
+      return;
+    }
+    const filmes = Array.isArray(filmesData) ? filmesData : [];
+    const q = valor.toLowerCase();
+    const sugestoes = filmes
+      .filter((f) => f.titulo?.toLowerCase().includes(q))
+      .slice(0, 6);
+    setFilmeSugestoes(sugestoes);
+  };
+
+  const handleSelecionarFilme = (filme) => {
+    setFilmeSelecionado({ id: filme.id, label: filme.titulo });
+    setFilmeInput(filme.titulo);
+    setFilmeSugestoes([]);
   };
 
   const handleAdicionarMembro = async (grupoId) => {
@@ -162,11 +187,16 @@ export default function GruposPage() {
   };
 
   const handleAdicionarFilme = async (grupoId) => {
-    if (!filmeInput.trim()) return;
+    if (!filmeSelecionado) {
+      setMessage({ text: "Selecione um filme válido da lista.", type: "error" });
+      return;
+    }
     try {
-      await adicionarFilme(grupoId, Number(filmeInput));
+      await adicionarFilme(grupoId, filmeSelecionado.id);
       setMessage({ text: "Filme adicionado com sucesso.", type: "success" });
       setFilmeInput("");
+      setFilmeSelecionado(null);
+      setFilmeSugestoes([]);
       mutate();
     } catch (error) {
       console.error(error);
@@ -311,7 +341,7 @@ export default function GruposPage() {
                               <div className={styles.membrosLista}>
                                 {grupo.membros.map((m) => (
                                   <span key={m.id} className={styles.membroTag}>
-                                    {m.username || `Usuário #${m.id}`}
+                                    {m.name || `Usuário #${m.id}`}
                                   </span>
                                 ))}
                               </div>
@@ -352,7 +382,7 @@ export default function GruposPage() {
                         <input
                           value={membroInput}
                           onChange={(e) => setMembroInput(e.target.value)}
-                          placeholder="Username do membro"
+                          placeholder="ID do membro Ex: 5"
                           className={styles.inputGerenciar}
                         />
                         <button
@@ -366,7 +396,7 @@ export default function GruposPage() {
                         <div className={styles.listaTags}>
                           {grupo.membros.map((m) => (
                             <span key={m.id} className={styles.tag}>
-                              {m.username || `Usuário #${m.id}`}
+                               {m.user ? `${m.user.username} #${m.user.id}` : `Usuário #${m.id}`}
                               <button
                                 className={styles.tagRemover}
                                 onClick={() => handleRemoverMembro(grupo.id, m.id)}
@@ -382,15 +412,32 @@ export default function GruposPage() {
                     <div className={styles.secaoGerenciar}>
                       <p className={styles.secaoTitulo}>Adicionar filme</p>
                       <div className={styles.linhaAdicionar}>
-                        <input
-                          value={filmeInput}
-                          onChange={(e) => setFilmeInput(e.target.value)}
-                          placeholder="Nome do filme"
-                          className={styles.inputGerenciar}
-                        />
+                        <div className={styles.inputComSugestoes}>
+                          <input
+                            value={filmeInput}
+                            onChange={(e) => handleFilmeInputChange(e.target.value)}
+                            placeholder="Buscar filme pelo título"
+                            className={styles.inputGerenciar}
+                            autoComplete="off"
+                          />
+                          {filmeSugestoes.length > 0 && (
+                            <ul className={styles.sugestoesLista}>
+                              {filmeSugestoes.map((f) => (
+                                <li
+                                  key={f.id}
+                                  className={styles.sugestaoItem}
+                                  onMouseDown={() => handleSelecionarFilme(f)}
+                                >
+                                  <span className={styles.sugestaoNome}>{f.titulo}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                         <button
                           className={styles.botaoAdicionar}
                           onClick={() => handleAdicionarFilme(grupo.id)}
+                          disabled={!filmeSelecionado}
                         >
                           Adicionar
                         </button>
