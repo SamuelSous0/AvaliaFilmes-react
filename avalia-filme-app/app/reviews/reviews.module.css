@@ -89,7 +89,7 @@
   background: rgba(229, 9, 20, 0.12);
   color: #ff6b6b;
   border: 1px solid rgba(229, 9, 20, 0.35);
-  padding: 0.65rem 0.85rem;
+  padding: 0.85rem 1.2rem;
   font-size: 0.85rem;
 }
 
@@ -415,4 +415,8 @@
     flex-direction: column;
     gap: 0.35rem;
   }
+}
+
+.formActions .dangerButton {
+  margin-top: 0;
 }

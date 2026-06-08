@@ -34,6 +34,7 @@ export default function ReviewsPage() {
   const [reviews, setReviews] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState(null);
   const [busca, setBusca] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -131,6 +132,31 @@ export default function ReviewsPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const abrirNovaReview = () => {
+    setEditingReviewId(null);
+    setForm(initialForm);
+    setShowForm((prev) => !prev);
+    setMessage({ text: "", type: "" });
+  };
+
+  const abrirEdicaoReview = (review) => {
+    setEditingReviewId(review.id);
+    setForm({
+      filmeId: String(review.filmeId ?? review.filme?.id ?? ""),
+      nota: review.nota != null ? String(review.nota) : "",
+      comentario: review.comentario || "",
+    });
+    setShowForm(true);
+    setMessage({ text: "", type: "" });
+  };
+
+  const fecharFormulario = () => {
+    setEditingReviewId(null);
+    setForm(initialForm);
+    setShowForm(false);
+    setMessage({ text: "", type: "" });
+  };
+
   const validarFormulario = () => {
     const nota = Number(form.nota);
 
@@ -166,6 +192,15 @@ export default function ReviewsPage() {
     try {
       setSaving(true);
 
+      const reviewDoMesmoFilme = minhasReviews.find((review) =>
+        Number(review.filmeId ?? review.filme?.id) === Number(form.filmeId)
+      );
+      const reviewParaSubstituirId = editingReviewId || reviewDoMesmoFilme?.id;
+
+      if (reviewParaSubstituirId) {
+        await deleteReview(reviewParaSubstituirId);
+      }
+
       await saveReview({
         filmeId: Number(form.filmeId),
         perfilId: Number(perfilId),
@@ -173,13 +208,17 @@ export default function ReviewsPage() {
         comentario: form.comentario.trim(),
       });
 
-      setMessage({ text: "Review publicada com sucesso!", type: "success" });
+      setMessage({
+        text: editingReviewId ? "Review atualizada com sucesso!" : "Review publicada com sucesso!",
+        type: "success",
+      });
       setForm(initialForm);
+      setEditingReviewId(null);
       setShowForm(false);
       await carregarDados();
     } catch (error) {
       console.error(error);
-      setMessage({ text: "Erro ao publicar review. Tente novamente.", type: "error" });
+      setMessage({ text: "Erro ao salvar review. Tente novamente.", type: "error" });
     } finally {
       setSaving(false);
     }
@@ -211,7 +250,7 @@ export default function ReviewsPage() {
 
         <motion.button
           className={styles.primaryButton}
-          onClick={() => setShowForm((prev) => !prev)}
+          onClick={abrirNovaReview}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.96 }}
           disabled={!perfilId}
@@ -236,7 +275,7 @@ export default function ReviewsPage() {
             exit={{ opacity: 0, y: -16 }}
           >
             <div className={styles.formHeader}>
-              <h2>Criar nova review</h2>
+              <h2>{editingReviewId ? "Editar review" : "Criar nova review"}</h2>
               <span>Nota de 0 a 5</span>
             </div>
 
@@ -280,9 +319,9 @@ export default function ReviewsPage() {
 
             <div className={styles.formActions}>
               <button className={styles.primaryButton} type="submit" disabled={saving}>
-                {saving ? "Publicando..." : "Publicar review"}
+                {saving ? "Salvando..." : editingReviewId ? "Salvar alterações" : "Publicar review"}
               </button>
-              <button className={styles.secondaryButton} type="button" onClick={() => setShowForm(false)}>
+              <button className={styles.secondaryButton} type="button" onClick={fecharFormulario}>
                 Cancelar
               </button>
             </div>
@@ -312,6 +351,7 @@ export default function ReviewsPage() {
                   review={review}
                   isMine
                   removing={removingId === review.id}
+                  onEdit={() => abrirEdicaoReview(review)}
                   onRemove={() => handleRemoverReview(review.id)}
                 />
               ))}
@@ -343,7 +383,7 @@ export default function ReviewsPage() {
           ) : (
             <div className={styles.reviewList}>
               {reviewsDeOutros.map((review) => (
-                <ReviewCard key={review.id} review={review} />
+                <ReviewCard key={review.id} review={review} perfilId={perfilId} />
               ))}
             </div>
           )}
@@ -353,7 +393,7 @@ export default function ReviewsPage() {
   );
 }
 
-function ReviewCard({ review, isMine = false, removing = false, onRemove }) {
+function ReviewCard({ review, isMine = false, removing = false, perfilId = null, onEdit, onRemove }) {
   return (
     <motion.article className={styles.reviewCard} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       <div className={styles.posterBox}>
@@ -375,12 +415,17 @@ function ReviewCard({ review, isMine = false, removing = false, onRemove }) {
 
         <p className={styles.comment}>{review.comentario}</p>
 
-        {!isMine && <ReacaoEstrelas reviewId={review.id} />}
+        {!isMine && <ReacaoEstrelas reviewId={review.id} perfilId={perfilId} />}
 
         {isMine && (
-          <button className={styles.dangerButton} onClick={onRemove} disabled={removing}>
-            {removing ? "Removendo..." : "Remover review"}
-          </button>
+          <div className={styles.formActions}>
+            <button className={styles.secondaryButton} type="button" onClick={onEdit}>
+              Editar review
+            </button>
+            <button className={styles.dangerButton} type="button" onClick={onRemove} disabled={removing}>
+              {removing ? "Removendo..." : "Remover review"}
+            </button>
+          </div>
         )}
       </div>
     </motion.article>
