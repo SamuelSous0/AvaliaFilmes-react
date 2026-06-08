@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import FilmePoster from "../components/FilmePoster/FilmePoster";
 import ReacaoEstrelas from "../components/ReacaoEstrelas/ReacaoEstrelas";
 import { getAllFilmes } from "../../services/filmeApi";
-import { getAllPerfis } from "../../services/perfilApi";
+import { getAllPerfis, savePerfil } from "../../services/perfilApi";
+import { getUserById } from "../../services/userApi";
 import { deleteReview, getAllReviews, saveReview } from "../../services/reviewApi";
 import styles from "./reviews.module.css";
 
@@ -41,21 +42,33 @@ export default function ReviewsPage() {
         return;
       }
 
-      const [reviewsData, filmesData, perfisData] = await Promise.all([
+      const [reviewsData, filmesData, perfisData, userData] = await Promise.all([
         getAllReviews(),
         getAllFilmes(),
         getAllPerfis(),
+        getUserById(userId),
       ]);
 
-      const perfilLogado = Array.isArray(perfisData)
-        ? perfisData.find((perfil) => perfil.username === username || perfil.user?.username === username)
+      const nomeUsuario = userData?.name || username;
+      let perfilLogado = Array.isArray(perfisData)
+        ? perfisData.find((perfil) => perfil.username === nomeUsuario || perfil.user?.username === nomeUsuario)
         : null;
 
       if (!perfilLogado?.id) {
-        setMessage({
-          text: "Não encontramos um perfil vinculado ao seu usuário. Crie/complete seu perfil antes de publicar reviews.",
-          type: "error",
+        perfilLogado = await savePerfil({
+          userId: Number(userId),
+          biografia: "",
+          fotoUrl: "",
         });
+
+        setMessage({
+          text: "Perfil inicial criado automaticamente. Você já pode publicar reviews.",
+          type: "success",
+        });
+      }
+
+      if (perfilLogado?.id) {
+        localStorage.setItem("perfilId", perfilLogado.id);
       }
 
       setPerfilId(perfilLogado?.id || null);
@@ -70,6 +83,7 @@ export default function ReviewsPage() {
   }, [router]);
 
   useEffect(() => {
+    // O padrão já é usado em outras páginas do projeto para buscar dados no carregamento.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     carregarDados();
   }, [carregarDados]);
@@ -110,8 +124,8 @@ export default function ReviewsPage() {
       return "Selecione um filme para criar a review.";
     }
 
-    if (Number.isNaN(nota) || nota < 0 || nota > 10) {
-      return "A nota deve ser um número entre 0 e 10.";
+    if (Number.isNaN(nota) || nota < 0 || nota > 5) {
+      return "A nota deve ser um número entre 0 e 5.";
     }
 
     if (!form.comentario.trim()) {
@@ -171,7 +185,6 @@ export default function ReviewsPage() {
     <main className={styles.page}>
       <section className={styles.hero}>
         <div>
-          <p className={styles.eyebrow}>AvaliaFilmes</p>
           <h1>Reviews</h1>
           <p className={styles.subtitle}>
             Publique suas opiniões e acompanhe o que outros usuários estão falando sobre seus filmes favoritos.
@@ -206,7 +219,7 @@ export default function ReviewsPage() {
           >
             <div className={styles.formHeader}>
               <h2>Criar nova review</h2>
-              <span>Nota de 0 a 10</span>
+              <span>Nota de 0 a 5</span>
             </div>
 
             <div className={styles.formGrid}>
@@ -227,9 +240,9 @@ export default function ReviewsPage() {
                 <input
                   type="number"
                   min="0"
-                  max="10"
+                  max="5"
                   step="0.5"
-                  placeholder="Ex.: 8.5"
+                  placeholder="Ex.: 4.5"
                   value={form.nota}
                   onChange={(event) => handleChange("nota", event.target.value)}
                 />
@@ -337,9 +350,9 @@ function ReviewCard({ review, isMine = false, removing = false, onRemove }) {
 
         <h3>{review.filmeTitulo || "Filme sem título"}</h3>
 
-        <div className={styles.ratingLine} aria-label={`Nota ${review.nota} de 10`}>
+        <div className={styles.ratingLine} aria-label={`Nota ${review.nota} de 5.0`}>
           <span className={styles.ratingStars}>{renderStars(review.nota)}</span>
-          <strong>{Number(review.nota).toFixed(1)}/10</strong>
+          <strong>{Number(review.nota).toFixed(1)}/5.0</strong>
         </div>
 
         <p className={styles.comment}>{review.comentario}</p>
@@ -394,6 +407,6 @@ function formatDate(date) {
 }
 
 function renderStars(nota = 0) {
-  const stars = Math.round(Number(nota) / 2);
+  const stars = Math.round(Number(nota));
   return "★".repeat(stars).padEnd(5, "☆");
 }
