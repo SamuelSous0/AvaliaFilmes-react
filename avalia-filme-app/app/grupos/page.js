@@ -28,8 +28,6 @@ export default function GruposPage() {
   const [expandidoId, setExpandidoId] = useState(null);
   const [membroInput, setMembroInput] = useState("");
   const [filmeInput, setFilmeInput] = useState("");
-  const [filmeSelecionado, setFilmeSelecionado] = useState(null);
-  const [filmeSugestoes, setFilmeSugestoes] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
@@ -58,6 +56,33 @@ export default function GruposPage() {
   );
 
   const grupos = useMemo(() => Array.isArray(data) ? data : [], [data]);
+  const perfis = useMemo(() => Array.isArray(perfisData) ? perfisData : [], [perfisData]);
+
+  const obterNomePerfil = (perfil) =>
+    perfil?.username ||
+    perfil?.user?.username ||
+    perfil?.nome ||
+    `Usuário #${perfil?.userId || perfil?.user?.id || perfil?.id}`;
+
+  const encontrarPerfilPorEntrada = (entrada) => {
+    const valor = entrada.trim();
+    if (!valor) return null;
+
+    const valorNormalizado = valor.toLowerCase();
+    const valorNumerico = Number(valor);
+    const ehNumero = !Number.isNaN(valorNumerico);
+
+    return perfis.find((perfil) => {
+      const perfilId = Number(perfil?.id);
+      const usuarioId = Number(perfil?.userId ?? perfil?.user?.id);
+      const username = (perfil?.username || perfil?.user?.username || perfil?.nome || "").toLowerCase();
+
+      return (
+        (ehNumero && (usuarioId === valorNumerico || perfilId === valorNumerico)) ||
+        username === valorNormalizado
+      );
+    });
+  };
 
   const filtrados = useMemo(() => {
     if (!busca.trim()) return grupos;
@@ -133,39 +158,27 @@ export default function GruposPage() {
     setGerenciandoId((prev) => (prev === id ? null : id));
     setMembroInput("");
     setFilmeInput("");
-    setFilmeSelecionado(null);
-    setFilmeSugestoes([]);
   };
 
   const toggleExpandir = (id) => {
     setExpandidoId((prev) => (prev === id ? null : id));
   };
 
-  const handleFilmeInputChange = (valor) => {
-    setFilmeInput(valor);
-    setFilmeSelecionado(null);
-    if (!valor.trim()) {
-      setFilmeSugestoes([]);
+  const handleAdicionarMembro = async (grupoId) => {
+    if (!membroInput.trim()) return;
+
+    const perfilEncontrado = encontrarPerfilPorEntrada(membroInput);
+
+    if (!perfilEncontrado?.id) {
+      setMessage({
+        text: "Nenhum perfil encontrado para esse usuário. Verifique se o backend já está retornando userId em /perfis/all ou tente pelo username.",
+        type: "error",
+      });
       return;
     }
-    const filmes = Array.isArray(filmesData) ? filmesData : [];
-    const q = valor.toLowerCase();
-    const sugestoes = filmes
-      .filter((f) => f.titulo?.toLowerCase().includes(q))
-      .slice(0, 6);
-    setFilmeSugestoes(sugestoes);
-  };
 
-  const handleSelecionarFilme = (filme) => {
-    setFilmeSelecionado({ id: filme.id, label: filme.titulo });
-    setFilmeInput(filme.titulo);
-    setFilmeSugestoes([]);
-  };
-
-  const handleAdicionarMembro = async (grupoId) => {
-  if (!membroInput.trim()) return;
     try {
-      await adicionarMembro(grupoId, Number(membroInput));
+      await adicionarMembro(grupoId, Number(perfilEncontrado.id));
       setMessage({ text: "Membro adicionado com sucesso.", type: "success" });
       setMembroInput("");
       mutate();
@@ -187,16 +200,11 @@ export default function GruposPage() {
   };
 
   const handleAdicionarFilme = async (grupoId) => {
-    if (!filmeSelecionado) {
-      setMessage({ text: "Selecione um filme válido da lista.", type: "error" });
-      return;
-    }
+    if (!filmeInput.trim()) return;
     try {
-      await adicionarFilme(grupoId, filmeSelecionado.id);
+      await adicionarFilme(grupoId, Number(filmeInput));
       setMessage({ text: "Filme adicionado com sucesso.", type: "success" });
       setFilmeInput("");
-      setFilmeSelecionado(null);
-      setFilmeSugestoes([]);
       mutate();
     } catch (error) {
       console.error(error);
@@ -341,7 +349,7 @@ export default function GruposPage() {
                               <div className={styles.membrosLista}>
                                 {grupo.membros.map((m) => (
                                   <span key={m.id} className={styles.membroTag}>
-                                    {m.user ? `${m.user.username} #${m.user.id}` : `Usuário #${m.id}`}
+                                    {obterNomePerfil(m)}
                                   </span>
                                 ))}
                               </div>
@@ -382,7 +390,7 @@ export default function GruposPage() {
                         <input
                           value={membroInput}
                           onChange={(e) => setMembroInput(e.target.value)}
-                          placeholder="ID do membro Ex: 5"
+                          placeholder="ID da navbar, username ou ID do perfil"
                           className={styles.inputGerenciar}
                         />
                         <button
@@ -396,7 +404,7 @@ export default function GruposPage() {
                         <div className={styles.listaTags}>
                           {grupo.membros.map((m) => (
                             <span key={m.id} className={styles.tag}>
-                               {m.user ? `${m.user.username} #${m.user.id}` : `Usuário #${m.id}`}
+                              {obterNomePerfil(m)}
                               <button
                                 className={styles.tagRemover}
                                 onClick={() => handleRemoverMembro(grupo.id, m.id)}
@@ -412,32 +420,15 @@ export default function GruposPage() {
                     <div className={styles.secaoGerenciar}>
                       <p className={styles.secaoTitulo}>Adicionar filme</p>
                       <div className={styles.linhaAdicionar}>
-                        <div className={styles.inputComSugestoes}>
-                          <input
-                            value={filmeInput}
-                            onChange={(e) => handleFilmeInputChange(e.target.value)}
-                            placeholder="Buscar filme pelo título"
-                            className={styles.inputGerenciar}
-                            autoComplete="off"
-                          />
-                          {filmeSugestoes.length > 0 && (
-                            <ul className={styles.sugestoesLista}>
-                              {filmeSugestoes.map((f) => (
-                                <li
-                                  key={f.id}
-                                  className={styles.sugestaoItem}
-                                  onMouseDown={() => handleSelecionarFilme(f)}
-                                >
-                                  <span className={styles.sugestaoNome}>{f.titulo}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
+                        <input
+                          value={filmeInput}
+                          onChange={(e) => setFilmeInput(e.target.value)}
+                          placeholder="Nome do filme"
+                          className={styles.inputGerenciar}
+                        />
                         <button
                           className={styles.botaoAdicionar}
                           onClick={() => handleAdicionarFilme(grupo.id)}
-                          disabled={!filmeSelecionado}
                         >
                           Adicionar
                         </button>
