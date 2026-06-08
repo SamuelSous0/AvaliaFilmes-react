@@ -7,7 +7,7 @@ Site de avaliação de filmes feito em React/Next com integração com a API RES
 - Samuel Alexandre
 - Sammuel Victor Santana
 - Yasmin Marcelly
-- João Victor Cruz Menezes
+- João Vitor Cruz de Menezes
 - João Victor de Oliveira Chaves
 - Leticia Vitoria Elias de Oliveira
 - Sofia Viana
