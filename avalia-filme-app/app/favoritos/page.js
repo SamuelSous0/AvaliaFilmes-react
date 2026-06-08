@@ -6,12 +6,31 @@ import { useRouter } from "next/navigation";
 import { getFavoritosByUser, deleteFavorito } from "../../services/favoritoApi";
 import styles from "./favoritos.module.css";
 
+const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+
+async function buscarPoster(titulo) {
+  try {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(
+        titulo
+      )}&language=pt-BR`
+    );
+
+    const data = await res.json();
+    const poster = data.results?.[0]?.poster_path;
+
+    return poster ? `https://image.tmdb.org/t/p/w200${poster}` : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function FavoritosPage() {
   const router = useRouter();
 
-  const [userId, setUserId] = useState(null);
   const [favoritos, setFavoritos] = useState([]);
   const [filtrados, setFiltrados] = useState([]);
+  const [posters, setPosters] = useState({});
   const [busca, setBusca] = useState("");
   const [loading, setLoading] = useState(true);
   const [removendo, setRemovendo] = useState(null);
@@ -33,8 +52,28 @@ export default function FavoritosPage() {
 
     try {
       const data = await getFavoritosByUser(id);
-      setFavoritos(data);
-      setFiltrados(data);
+      const lista = Array.isArray(data) ? data : [];
+
+      setFavoritos(lista);
+      setFiltrados(lista);
+
+      const postersMap = {};
+
+      await Promise.all(
+        lista.map(async (fav) => {
+          const titulo = fav.filme?.titulo;
+
+          if (titulo) {
+            const posterUrl = await buscarPoster(titulo);
+
+            if (posterUrl) {
+              postersMap[fav.id] = posterUrl;
+            }
+          }
+        })
+      );
+
+      setPosters(postersMap);
     } catch (err) {
       console.error("[Favoritos] Erro ao carregar:", err);
       exibirToast("Não foi possível carregar seus favoritos.", "error");
@@ -51,7 +90,6 @@ export default function FavoritosPage() {
       return;
     }
 
-    setUserId(id);
     carregarFavoritos(id);
   }, [router, carregarFavoritos]);
 
@@ -207,6 +245,7 @@ export default function FavoritosPage() {
                 key={fav.id}
                 fav={fav}
                 index={index}
+                posterUrl={posters[fav.id]}
                 removendo={removendo === fav.id}
                 onRemover={handleRemover}
               />
@@ -230,7 +269,7 @@ export default function FavoritosPage() {
   );
 }
 
-function MovieCard({ fav, index, removendo, onRemover }) {
+function MovieCard({ fav, index, posterUrl, removendo, onRemover }) {
   const filme = fav.filme || {};
   const titulo = filme.titulo || "Sem título";
 
@@ -240,9 +279,9 @@ function MovieCard({ fav, index, removendo, onRemover }) {
       style={{ animationDelay: `${Math.min(index * 55, 440)}ms` }}
     >
       <div className={styles.cardPoster}>
-        {filme.posterUrl ? (
+        {posterUrl ? (
           <img
-            src={filme.posterUrl}
+            src={posterUrl}
             alt={`Poster de ${titulo}`}
             className={styles.posterImg}
           />
