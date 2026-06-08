@@ -85,90 +85,57 @@ const handleFavorito = async (filme) => {
 
   try {
     setFavoritandoId(filme.id);
+        ) : (
+          filtrados.map((filme) => {
+            const cover = posters[filme.id] || filme.coverUrl || filme.posterUrl || filme.capa || filme.image || filme.poster || filme.imagem;
+            return (
+              <div key={filme.id} className={styles.cardFilme}>
+                <button
+                  className={`${styles.botaoFavorito} ${
+                    verificarFavorito(filme.id) ? styles.favoritado : ""
+                  }`}
+                  onClick={() => handleFavorito(filme)}
+                  disabled={favoritandoId === filme.id}
+                  title={
+                    verificarFavorito(filme.id)
+                      ? "Remover dos favoritos"
+                      : "Adicionar aos favoritos"
+                  }
+                >
+                  {favoritandoId === filme.id ? "..." : verificarFavorito(filme.id) ? "★" : "☆"}
+                </button>
 
-    if (favoritoExistente) {
-      await deleteFavorito(favoritoExistente.id);
-      setMessage({ text: "Filme removido dos favoritos.", type: "success" });
-    } else {
-      await addFavorito(userId, filme.id);
-      setMessage({ text: "Filme adicionado aos favoritos.", type: "success" });
-    }
+                <div className={styles.cardFilmeTopo}>
+                  <div className={styles.capaContainer}>
+                    {cover ? (
+                      <img src={cover} alt={filme.titulo || filme.title} className={styles.capaImagem} />
+                    ) : (
+                      <div className={styles.capaPlaceholder} />
+                    )}
+                  </div>
 
-    await loadFavoritos(userId);
-  } catch (error) {
-    console.error(error);
-    setMessage({
-      text: "Erro ao atualizar favorito.",
-      type: "error",
-    });
-  } finally {
-    setFavoritandoId(null);
-  }
-};
+                  <div className={styles.cardFilmeInfo}>
+                    <p className={styles.cardFilmeTitulo}>{filme.titulo || filme.title}</p>
+                    <p className={styles.cardFilmeDetalhe}>
+                      {filme.diretor || filme.director} • {filme.anoLancamento || filme.year || "Ano não informado"}
+                    </p>
+                    {filme.genero && <p className={styles.cardFilmeDetalhe}>{filme.genero}</p>}
+                  </div>
 
-  useEffect(() => {
-    const id = localStorage.getItem("userId");
-    if (!id) { router.push("/login"); return; }
+                  <div className={styles.cardFilmeNota}>
+                    {filme.rating != null ? `${filme.rating}/10` : "—"}
+                  </div>
+                </div>
 
-    setUserId(id);
-    loadFilmes();
-    loadFavoritos(id)
-  }, [router]);
+                {filme.review && <p className={styles.cardFilmeDescricao}>{filme.review}</p>}
 
-  useEffect(() => {
-    if (!busca.trim()) {
-      setFiltrados(filmes);
-    } else {
-      setFiltrados(filmes.filter(f =>
-        f.titulo?.toLowerCase().includes(busca.toLowerCase()) ||
-        f.diretor?.toLowerCase().includes(busca.toLowerCase()) ||
-        f.genero?.toLowerCase().includes(busca.toLowerCase())
-      ));
-    }
-  }, [busca, filmes]);
+                <div className={styles.cardFilmeAcoes}>
+                  <button className={styles.botaoEditar} onClick={() => abrirAvaliacao(filme)}>
+                    {filme.rating != null ? "Editar avaliação" : "Avaliar"}
+                  </button>
+                </div>
 
-  const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
-
-  const abrirAvaliacao = (filme) => {
-    setAvaliacaoAbertaId(filme.id);
-    setForm({ rating: filme.rating != null ? String(filme.rating) : "", review: filme.review || "" });
-  };
-
-  const cancelarAvaliacao = () => {
-    setAvaliacaoAbertaId(null);
-    setForm(initialForm);
-    setMessage({ text: "", type: "" });
-  };
-
-  const handleSalvarAvaliacao = async (id) => {
-    if (form.rating && (isNaN(Number(form.rating)) || Number(form.rating) < 0 || Number(form.rating) > 10)) {
-      setMessage({ text: "Avaliação deve ficar entre 0 e 10.", type: "error" });
-      return;
-    }
-    const payload = {
-      rating: form.rating ? Number(form.rating) : null,
-      review: form.review ? form.review.trim() : "",
-    };
-    try {
-      setSaving(true);
-      await updateFilme(id, payload);
-      setMessage({ text: "Avaliação salva com sucesso.", type: "success" });
-      cancelarAvaliacao();
-      loadFilmes();
-    } catch (error) {
-      console.error(error);
-      setMessage({ text: "Erro ao salvar avaliação.", type: "error" });
-    } finally {
-      setSaving(false);
-    }
-    
-  };
-
-  return (
-    <div className={styles.containerFilmes}>
-      <div className={styles.listaFilmes}>
-        <div className={styles.listaHeader}>
-          <h3>Lista de Filmes</h3>
+                {avaliacaoAbertaId === filme.id && (
           <span>{filtrados.length} filme(s) encontrados</span>
         </div>
 
@@ -199,6 +166,7 @@ const handleFavorito = async (filme) => {
         ) : filtrados.length === 0 ? (
           <div className={styles.vazio}>Nenhum filme encontrado.</div>
         ) : (
+<<<<<<< HEAD
           filtrados.map((filme) => (
             <div key={filme.id} className={styles.cardFilme}>
               <button
@@ -234,10 +202,41 @@ const handleFavorito = async (filme) => {
                     {filme.diretor} • {filme.anoLancamento}
                   </p>
                   <p className={styles.cardFilmeDetalhe}>{filme.genero}</p>
+=======
+          filmes.map((filme) => {
+            const cover = filme.coverUrl || filme.posterUrl || filme.capa || filme.image || filme.poster || filme.imagem;
+            return (
+              <div key={filme.id} className={styles.cardFilme}>
+                <div className={styles.cardFilmeTopo}>
+                  <div className={styles.capaContainer}>
+                    {cover ? (
+                      <img src={cover} alt={filme.title} className={styles.capaImagem} />
+                    ) : (
+                      <div className={styles.capaPlaceholder} />
+                    )}
+                  </div>
+
+                  <div className={styles.cardFilmeInfo}>
+                    <p className={styles.cardFilmeTitulo}>{filme.title}</p>
+                    <p className={styles.cardFilmeDetalhe}>
+                      {filme.director} • {filme.year || "Ano não informado"}
+                    </p>
+                  </div>
+
+                  <div className={styles.cardFilmeNota}>
+                    {filme.rating != null ? `${filme.rating}/10` : "—"}
+                  </div>
+>>>>>>> 5b284e0 (mudanca tmanho posters)
                 </div>
-                <div className={styles.cardFilmeNota}>
-                  {filme.rating != null ? `${filme.rating}/10` : "—"}
+
+                {filme.review && <p className={styles.cardFilmeDescricao}>{filme.review}</p>}
+
+                <div className={styles.cardFilmeAcoes}>
+                  <button className={styles.botaoEditar} onClick={() => abrirAvaliacao(filme)}>
+                    {filme.rating != null ? "Editar avaliação" : "Avaliar"}
+                  </button>
                 </div>
+<<<<<<< HEAD
               </div>
 
               {filme.review && <p className={styles.cardFilmeDescricao}>{filme.review}</p>}
@@ -247,6 +246,8 @@ const handleFavorito = async (filme) => {
                   {filme.rating != null ? "Editar avaliação" : "Avaliar"}
                 </button>
               </div>
+=======
+>>>>>>> 5b284e0 (mudanca tmanho posters)
 
               {avaliacaoAbertaId === filme.id && (
                 <div className={styles.formulario} style={{ marginTop: 12 }}>
