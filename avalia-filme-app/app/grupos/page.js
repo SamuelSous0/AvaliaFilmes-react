@@ -341,7 +341,7 @@ export default function GruposPage() {
                               <div className={styles.membrosLista}>
                                 {grupo.membros.map((m) => (
                                   <span key={m.id} className={styles.membroTag}>
-                                    {m.name || `Usuário #${m.id}`}
+                                    {m.user ? `${m.user.username} #${m.user.id}` : `Usuário #${m.id}`}
                                   </span>
                                 ))}
                               </div>
