@@ -8,7 +8,12 @@ import ReacaoEstrelas from "../components/ReacaoEstrelas/ReacaoEstrelas";
 import { getAllFilmes } from "../../services/filmeApi";
 import { getAllPerfis, savePerfil } from "../../services/perfilApi";
 import { getUserById } from "../../services/userApi";
-import { deleteReview, getAllReviews, saveReview } from "../../services/reviewApi";
+import {
+  deleteReview,
+  getAllReviews,
+  saveReview,
+  updateReview,
+} from "../../services/reviewApi";
 import styles from "./reviews.module.css";
 
 const initialForm = {
@@ -21,11 +26,13 @@ const encontrarPerfilDoUsuario = (perfis, nomeUsuario) => {
   if (!Array.isArray(perfis)) return null;
 
   return perfis.find(
-    (perfil) => perfil.username === nomeUsuario || perfil.user?.username === nomeUsuario
+    (perfil) =>
+      perfil.username === nomeUsuario || perfil.user?.username === nomeUsuario,
   );
 };
 
-const aguardar = (tempoEmMs) => new Promise((resolve) => setTimeout(resolve, tempoEmMs));
+const aguardar = (tempoEmMs) =>
+  new Promise((resolve) => setTimeout(resolve, tempoEmMs));
 
 export default function ReviewsPage() {
   const router = useRouter();
@@ -53,12 +60,9 @@ export default function ReviewsPage() {
         return;
       }
 
-      const [reviewsData, filmesData, perfisData, userData] = await Promise.all([
-        getAllReviews(),
-        getAllFilmes(),
-        getAllPerfis(),
-        getUserById(userId),
-      ]);
+      const [reviewsData, filmesData, perfisData, userData] = await Promise.all(
+        [getAllReviews(), getAllFilmes(), getAllPerfis(), getUserById(userId)],
+      );
 
       const nomeUsuario = userData?.name || username;
       let perfilLogado = encontrarPerfilDoUsuario(perfisData, nomeUsuario);
@@ -83,7 +87,10 @@ export default function ReviewsPage() {
 
         if (!perfilLogado?.id) {
           const perfisAtualizados = await getAllPerfis();
-          perfilLogado = encontrarPerfilDoUsuario(perfisAtualizados, nomeUsuario);
+          perfilLogado = encontrarPerfilDoUsuario(
+            perfisAtualizados,
+            nomeUsuario,
+          );
         }
       }
 
@@ -96,7 +103,10 @@ export default function ReviewsPage() {
       setFilmes(Array.isArray(filmesData) ? filmesData : []);
     } catch (error) {
       console.error(error);
-      setMessage({ text: "Não foi possível carregar as reviews.", type: "error" });
+      setMessage({
+        text: "Não foi possível carregar as reviews.",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -108,8 +118,9 @@ export default function ReviewsPage() {
   }, [carregarDados]);
 
   const minhasReviews = useMemo(
-    () => reviews.filter((review) => Number(review.perfilId) === Number(perfilId)),
-    [reviews, perfilId]
+    () =>
+      reviews.filter((review) => Number(review.perfilId) === Number(perfilId)),
+    [reviews, perfilId],
   );
 
   const reviewsDeOutros = useMemo(() => {
@@ -192,24 +203,30 @@ export default function ReviewsPage() {
     try {
       setSaving(true);
 
-      const reviewDoMesmoFilme = minhasReviews.find((review) =>
-        Number(review.filmeId ?? review.filme?.id) === Number(form.filmeId)
-      );
-      const reviewParaSubstituirId = editingReviewId || reviewDoMesmoFilme?.id;
-
-      if (reviewParaSubstituirId) {
-        await deleteReview(reviewParaSubstituirId);
-      }
-
-      await saveReview({
+      const payload = {
         filmeId: Number(form.filmeId),
         perfilId: Number(perfilId),
         nota: Number(form.nota),
         comentario: form.comentario.trim(),
-      });
+      };
+
+      const reviewDoMesmoFilme = minhasReviews.find(
+        (review) =>
+          Number(review.filmeId ?? review.filme?.id) === Number(form.filmeId),
+      );
+
+      if (editingReviewId) {
+        await updateReview(editingReviewId, payload);
+      } else if (reviewDoMesmoFilme?.id) {
+        await updateReview(reviewDoMesmoFilme.id, payload);
+      } else {
+        await saveReview(payload);
+      }
 
       setMessage({
-        text: editingReviewId ? "Review atualizada com sucesso!" : "Review publicada com sucesso!",
+        text: editingReviewId
+          ? "Review atualizada com sucesso!"
+          : "Review publicada com sucesso!",
         type: "success",
       });
       setForm(initialForm);
@@ -218,7 +235,10 @@ export default function ReviewsPage() {
       await carregarDados();
     } catch (error) {
       console.error(error);
-      setMessage({ text: "Erro ao salvar review. Tente novamente.", type: "error" });
+      setMessage({
+        text: "Erro ao salvar review. Tente novamente.",
+        type: "error",
+      });
     } finally {
       setSaving(false);
     }
@@ -244,7 +264,8 @@ export default function ReviewsPage() {
         <div>
           <h1>Reviews</h1>
           <p className={styles.subtitle}>
-            Publique suas opiniões e acompanhe o que outros usuários estão falando sobre seus filmes favoritos.
+            Publique suas opiniões e acompanhe o que outros usuários estão
+            falando sobre seus filmes favoritos.
           </p>
         </div>
 
@@ -260,7 +281,9 @@ export default function ReviewsPage() {
       </section>
 
       {message.text && (
-        <p className={`${styles.message} ${message.type === "success" ? styles.success : styles.error}`}>
+        <p
+          className={`${styles.message} ${message.type === "success" ? styles.success : styles.error}`}
+        >
           {message.text}
         </p>
       )}
@@ -282,7 +305,12 @@ export default function ReviewsPage() {
             <div className={styles.formGrid}>
               <label className={styles.field}>
                 Filme
-                <select value={form.filmeId} onChange={(event) => handleChange("filmeId", event.target.value)}>
+                <select
+                  value={form.filmeId}
+                  onChange={(event) =>
+                    handleChange("filmeId", event.target.value)
+                  }
+                >
                   <option value="">Selecione um filme</option>
                   {filmes.map((filme) => (
                     <option key={filme.id} value={filme.id}>
@@ -313,15 +341,29 @@ export default function ReviewsPage() {
                 maxLength="1000"
                 placeholder="Conte o que achou do filme..."
                 value={form.comentario}
-                onChange={(event) => handleChange("comentario", event.target.value)}
+                onChange={(event) =>
+                  handleChange("comentario", event.target.value)
+                }
               />
             </label>
 
             <div className={styles.formActions}>
-              <button className={styles.primaryButton} type="submit" disabled={saving}>
-                {saving ? "Salvando..." : editingReviewId ? "Salvar alterações" : "Publicar review"}
+              <button
+                className={styles.primaryButton}
+                type="submit"
+                disabled={saving}
+              >
+                {saving
+                  ? "Salvando..."
+                  : editingReviewId
+                    ? "Salvar alterações"
+                    : "Publicar review"}
               </button>
-              <button className={styles.secondaryButton} type="button" onClick={fecharFormulario}>
+              <button
+                className={styles.secondaryButton}
+                type="button"
+                onClick={fecharFormulario}
+              >
                 Cancelar
               </button>
             </div>
@@ -342,7 +384,11 @@ export default function ReviewsPage() {
           {loading ? (
             <ReviewSkeleton />
           ) : minhasReviews.length === 0 ? (
-            <EmptyState icon="✍️" title="Você ainda não publicou reviews" text="Clique em Nova review para registrar sua primeira opinião." />
+            <EmptyState
+              icon="✍️"
+              title="Você ainda não publicou reviews"
+              text="Clique em Nova review para registrar sua primeira opinião."
+            />
           ) : (
             <div className={styles.reviewList}>
               {minhasReviews.map((review) => (
@@ -379,11 +425,19 @@ export default function ReviewsPage() {
           {loading ? (
             <ReviewSkeleton />
           ) : reviewsDeOutros.length === 0 ? (
-            <EmptyState icon="🎬" title="Nenhuma review encontrada" text="Quando outros usuários publicarem, elas aparecerão aqui." />
+            <EmptyState
+              icon="🎬"
+              title="Nenhuma review encontrada"
+              text="Quando outros usuários publicarem, elas aparecerão aqui."
+            />
           ) : (
             <div className={styles.reviewList}>
               {reviewsDeOutros.map((review) => (
-                <ReviewCard key={review.id} review={review} perfilId={perfilId} />
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  perfilId={perfilId}
+                />
               ))}
             </div>
           )}
@@ -393,22 +447,39 @@ export default function ReviewsPage() {
   );
 }
 
-function ReviewCard({ review, isMine = false, removing = false, perfilId = null, onEdit, onRemove }) {
+function ReviewCard({
+  review,
+  isMine = false,
+  removing = false,
+  perfilId = null,
+  onEdit,
+  onRemove,
+}) {
   return (
-    <motion.article className={styles.reviewCard} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+    <motion.article
+      className={styles.reviewCard}
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
       <div className={styles.posterBox}>
         <FilmePoster titulo={review.filmeTitulo} />
       </div>
 
       <div className={styles.reviewContent}>
         <div className={styles.reviewTopline}>
-          <span className={styles.badge}>{isMine ? "Minha review" : review.perfilNome || "Usuário"}</span>
+          <span className={styles.badge}>
+            {isMine ? "Minha review" : review.perfilNome || "Usuário"}
+          </span>
           <span className={styles.date}>{formatDate(review.dataCriacao)}</span>
         </div>
 
         <h3>{review.filmeTitulo || "Filme sem título"}</h3>
 
-        <div className={styles.ratingLine} aria-label={`Nota ${Number(review.nota).toFixed(1)} de 5.0`}>
+        <div
+          className={styles.ratingLine}
+          aria-label={`Nota ${Number(review.nota).toFixed(1)} de 5.0`}
+        >
           <span className={styles.ratingStars}>{renderStars(review.nota)}</span>
           <strong>{Number(review.nota).toFixed(1)}/5.0</strong>
         </div>
@@ -419,10 +490,19 @@ function ReviewCard({ review, isMine = false, removing = false, perfilId = null,
 
         {isMine && (
           <div className={styles.formActions}>
-            <button className={styles.secondaryButton} type="button" onClick={onEdit}>
+            <button
+              className={styles.secondaryButton}
+              type="button"
+              onClick={onEdit}
+            >
               Editar review
             </button>
-            <button className={styles.dangerButton} type="button" onClick={onRemove} disabled={removing}>
+            <button
+              className={styles.dangerButton}
+              type="button"
+              onClick={onRemove}
+              disabled={removing}
+            >
               {removing ? "Removendo..." : "Remover review"}
             </button>
           </div>

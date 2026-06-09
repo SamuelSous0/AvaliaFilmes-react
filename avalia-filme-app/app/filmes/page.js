@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { getAllFilmes } from "../../services/filmeApi";
 import { getAllPerfis, savePerfil } from "../../services/perfilApi";
 import { getUserById } from "../../services/userApi";
-import { deleteReview, getAllReviews, saveReview } from "../../services/reviewApi";
+import {
+  deleteReview,
+  getAllReviews,
+  saveReview,
+  updateReview,
+} from "../../services/reviewApi";
 import styles from "./filmes.module.css";
 
 import {
@@ -20,7 +25,7 @@ const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 async function buscarPoster(titulo) {
   try {
     const res = await fetch(
-      `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(titulo)}&language=pt-BR`
+      `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(titulo)}&language=pt-BR`,
     );
     const data = await res.json();
     const poster = data.results?.[0]?.poster_path;
@@ -30,14 +35,20 @@ async function buscarPoster(titulo) {
   }
 }
 
-const aguardar = (tempoEmMs) => new Promise((resolve) => setTimeout(resolve, tempoEmMs));
+const aguardar = (tempoEmMs) =>
+  new Promise((resolve) => setTimeout(resolve, tempoEmMs));
 
 const encontrarPerfilDoUsuario = (perfis, nomeUsuario, userId) => {
   if (!Array.isArray(perfis)) return null;
 
   return perfis.find((perfil) => {
-    const perfilUserId = perfil.userId ?? perfil.user?.id ?? perfil.usuarioId ?? perfil.usuario?.id;
-    const perfilUsername = perfil.username ?? perfil.user?.username ?? perfil.usuario?.username;
+    const perfilUserId =
+      perfil.userId ??
+      perfil.user?.id ??
+      perfil.usuarioId ??
+      perfil.usuario?.id;
+    const perfilUsername =
+      perfil.username ?? perfil.user?.username ?? perfil.usuario?.username;
 
     return (
       (userId && Number(perfilUserId) === Number(userId)) ||
@@ -47,7 +58,11 @@ const encontrarPerfilDoUsuario = (perfis, nomeUsuario, userId) => {
 };
 
 const obterReviewFilmeId = (review) =>
-  review.filmeId ?? review.filme?.id ?? review.filme_id ?? review.movieId ?? null;
+  review.filmeId ??
+  review.filme?.id ??
+  review.filme_id ??
+  review.movieId ??
+  null;
 
 const obterPerfilReviewId = (review) =>
   review.perfilId ?? review.perfil?.id ?? review.perfil_id ?? null;
@@ -105,7 +120,11 @@ export default function FilmesPage() {
 
       if (!perfilLogado?.id) {
         const perfisAtualizados = await getAllPerfis();
-        perfilLogado = encontrarPerfilDoUsuario(perfisAtualizados, nomeUsuario, id);
+        perfilLogado = encontrarPerfilDoUsuario(
+          perfisAtualizados,
+          nomeUsuario,
+          id,
+        );
       }
     }
 
@@ -161,7 +180,7 @@ export default function FilmesPage() {
           const titulo = filme.titulo || filme.title || filme.name || "";
           const url = titulo ? await buscarPoster(titulo) : null;
           if (url) postersMap[filme.id] = url;
-        })
+        }),
       );
       setPosters(postersMap);
     } catch (error) {
@@ -179,7 +198,10 @@ export default function FilmesPage() {
       const reviewPerfilId = obterPerfilReviewId(review);
       const reviewFilmeId = obterReviewFilmeId(review);
 
-      if (Number(reviewPerfilId) === Number(perfilId) && reviewFilmeId != null) {
+      if (
+        Number(reviewPerfilId) === Number(perfilId) &&
+        reviewFilmeId != null
+      ) {
         mapa.set(Number(reviewFilmeId), review);
       }
     });
@@ -204,7 +226,10 @@ export default function FilmesPage() {
         setMessage({ text: "Filme removido dos favoritos.", type: "success" });
       } else {
         await addFavorito(userId, filme.id);
-        setMessage({ text: "Filme adicionado aos favoritos.", type: "success" });
+        setMessage({
+          text: "Filme adicionado aos favoritos.",
+          type: "success",
+        });
       }
 
       await loadFavoritos(userId);
@@ -229,15 +254,20 @@ export default function FilmesPage() {
       setFiltrados(
         filmes.filter(
           (f) =>
-            (f.titulo || f.title || "").toLowerCase().includes(busca.toLowerCase()) ||
-            (f.diretor || f.director || "").toLowerCase().includes(busca.toLowerCase()) ||
-            (f.genero || "").toLowerCase().includes(busca.toLowerCase())
-        )
+            (f.titulo || f.title || "")
+              .toLowerCase()
+              .includes(busca.toLowerCase()) ||
+            (f.diretor || f.director || "")
+              .toLowerCase()
+              .includes(busca.toLowerCase()) ||
+            (f.genero || "").toLowerCase().includes(busca.toLowerCase()),
+        ),
       );
     }
   }, [busca, filmes]);
 
-  const handleChange = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+  const handleChange = (field, value) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
 
   const abrirAvaliacao = (filme) => {
     const minhaReview = minhasReviewsPorFilme.get(Number(filme.id));
@@ -286,18 +316,23 @@ export default function FilmesPage() {
     try {
       setSaving(true);
 
-      if (reviewExistente?.id) {
-        await deleteReview(reviewExistente.id);
-      }
-
-      await saveReview({
+      const payload = {
         filmeId: Number(filme.id),
         perfilId: Number(perfilId),
         nota: Number(form.rating),
         comentario: form.review.trim(),
-      });
+      };
 
-      setMessage({ text: "Avaliação salva e enviada para suas reviews.", type: "success" });
+      if (reviewExistente?.id) {
+        await updateReview(reviewExistente.id, payload);
+      } else {
+        await saveReview(payload);
+      }
+
+      setMessage({
+        text: "Avaliação salva e enviada para suas reviews.",
+        type: "success",
+      });
       setAvaliacaoAbertaId(null);
       setForm(initialForm);
       await loadFilmes();
@@ -313,14 +348,20 @@ export default function FilmesPage() {
     const reviewExistente = minhasReviewsPorFilme.get(Number(filme.id));
 
     if (!reviewExistente?.id) {
-      setMessage({ text: "Nenhuma avaliação encontrada para remover.", type: "error" });
+      setMessage({
+        text: "Nenhuma avaliação encontrada para remover.",
+        type: "error",
+      });
       return;
     }
 
     try {
       setRemovingAvaliacaoId(filme.id);
       await deleteReview(reviewExistente.id);
-      setMessage({ text: "Avaliação removida das suas reviews.", type: "success" });
+      setMessage({
+        text: "Avaliação removida das suas reviews.",
+        type: "success",
+      });
 
       if (avaliacaoAbertaId === filme.id) {
         setAvaliacaoAbertaId(null);
@@ -342,16 +383,25 @@ export default function FilmesPage() {
         <div className={styles.cabecalho}>
           <div>
             <h2>Filmes</h2>
-            <p className={styles.subtitulo}>Visualize filmes, busque, marque favoritos e publique reviews com nota de 0 a 5.</p>
+            <p className={styles.subtitulo}>
+              Visualize filmes, busque, marque favoritos e publique reviews com
+              nota de 0 a 5.
+            </p>
           </div>
         </div>
 
         {message.text && (
-          <p className={`${styles.mensagem} ${message.type === "success" ? styles.sucesso : styles.erro}`}>{message.text}</p>
+          <p
+            className={`${styles.mensagem} ${message.type === "success" ? styles.sucesso : styles.erro}`}
+          >
+            {message.text}
+          </p>
         )}
 
         <div className={styles.formulario}>
-          <p className={styles.subtitulo}>Selecione um filme abaixo para avaliar.</p>
+          <p className={styles.subtitulo}>
+            Selecione um filme abaixo para avaliar.
+          </p>
         </div>
       </div>
 
@@ -384,27 +434,60 @@ export default function FilmesPage() {
         ) : (
           filtrados.map((filme) => {
             const minhaReview = minhasReviewsPorFilme.get(Number(filme.id));
-            const cover = posters[filme.id] || filme.coverUrl || filme.posterUrl || filme.capa || filme.image || filme.poster || filme.imagem;
+            const cover =
+              posters[filme.id] ||
+              filme.coverUrl ||
+              filme.posterUrl ||
+              filme.capa ||
+              filme.image ||
+              filme.poster ||
+              filme.imagem;
             return (
               <div key={filme.id} className={styles.cardFilme}>
                 <button
                   className={`${styles.botaoFavorito} ${verificarFavorito(filme.id) ? styles.favoritado : ""}`}
                   onClick={() => handleFavorito(filme)}
                   disabled={favoritandoId === filme.id}
-                  title={verificarFavorito(filme.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                  title={
+                    verificarFavorito(filme.id)
+                      ? "Remover dos favoritos"
+                      : "Adicionar aos favoritos"
+                  }
                 >
-                  {favoritandoId === filme.id ? "..." : verificarFavorito(filme.id) ? "★" : "☆"}
+                  {favoritandoId === filme.id
+                    ? "..."
+                    : verificarFavorito(filme.id)
+                      ? "★"
+                      : "☆"}
                 </button>
 
                 <div className={styles.cardFilmeTopo}>
                   <div className={styles.capaContainer}>
-                    {cover ? <img src={cover} alt={filme.titulo || filme.title} className={styles.capaImagem} /> : <div className={styles.capaPlaceholder} />}
+                    {cover ? (
+                      <img
+                        src={cover}
+                        alt={filme.titulo || filme.title}
+                        className={styles.capaImagem}
+                      />
+                    ) : (
+                      <div className={styles.capaPlaceholder} />
+                    )}
                   </div>
 
                   <div className={styles.cardFilmeInfo}>
-                    <p className={styles.cardFilmeTitulo}>{filme.titulo || filme.title}</p>
-                    <p className={styles.cardFilmeDetalhe}>{(filme.diretor || filme.director) + " • " + (filme.anoLancamento || filme.year || "Ano não informado")}</p>
-                    {filme.genero && <p className={styles.cardFilmeDetalhe}>{filme.genero}</p>}
+                    <p className={styles.cardFilmeTitulo}>
+                      {filme.titulo || filme.title}
+                    </p>
+                    <p className={styles.cardFilmeDetalhe}>
+                      {(filme.diretor || filme.director) +
+                        " • " +
+                        (filme.anoLancamento ||
+                          filme.year ||
+                          "Ano não informado")}
+                    </p>
+                    {filme.genero && (
+                      <p className={styles.cardFilmeDetalhe}>{filme.genero}</p>
+                    )}
                     {minhaReview && (
                       <p className={styles.cardFilmeDetalhe}>
                         Sua review: {formatarNota(minhaReview.nota)}/5.0
@@ -412,13 +495,24 @@ export default function FilmesPage() {
                     )}
                   </div>
 
-                  <div className={styles.cardFilmeNota}>{minhaReview ? `${formatarNota(minhaReview.nota)}/5.0` : "—"}</div>
+                  <div className={styles.cardFilmeNota}>
+                    {minhaReview
+                      ? `${formatarNota(minhaReview.nota)}/5.0`
+                      : "—"}
+                  </div>
                 </div>
 
-                {minhaReview?.comentario && <p className={styles.cardFilmeDescricao}>{minhaReview.comentario}</p>}
+                {minhaReview?.comentario && (
+                  <p className={styles.cardFilmeDescricao}>
+                    {minhaReview.comentario}
+                  </p>
+                )}
 
                 <div className={styles.cardFilmeAcoes}>
-                  <button className={styles.botaoEditar} onClick={() => abrirAvaliacao(filme)}>
+                  <button
+                    className={styles.botaoEditar}
+                    onClick={() => abrirAvaliacao(filme)}
+                  >
                     {minhaReview ? "Editar avaliação" : "Avaliar"}
                   </button>
                   {minhaReview && (
@@ -427,7 +521,9 @@ export default function FilmesPage() {
                       onClick={() => handleRemoverAvaliacao(filme)}
                       disabled={removingAvaliacaoId === filme.id}
                     >
-                      {removingAvaliacaoId === filme.id ? "Removendo..." : "Remover avaliação"}
+                      {removingAvaliacaoId === filme.id
+                        ? "Removendo..."
+                        : "Remover avaliação"}
                     </button>
                   )}
                 </div>
@@ -443,18 +539,35 @@ export default function FilmesPage() {
                           max="5"
                           step="0.5"
                           value={form.rating}
-                          onChange={(e) => handleChange("rating", e.target.value)}
+                          onChange={(e) =>
+                            handleChange("rating", e.target.value)
+                          }
                           placeholder="0 a 5"
                         />
                       </div>
                     </div>
                     <div className={styles.grupoFormulario}>
                       <label>Comentário</label>
-                      <textarea value={form.review} onChange={(e) => handleChange("review", e.target.value)} placeholder="Seu comentário sobre o filme" />
+                      <textarea
+                        value={form.review}
+                        onChange={(e) => handleChange("review", e.target.value)}
+                        placeholder="Seu comentário sobre o filme"
+                      />
                     </div>
                     <div className={styles.acoes}>
-                      <button className={styles.botaoSalvar} onClick={() => handleSalvarAvaliacao(filme)} disabled={saving}>{saving ? "Salvando..." : "Salvar avaliação"}</button>
-                      <button className={styles.botaoCancelar} onClick={cancelarAvaliacao}>Cancelar</button>
+                      <button
+                        className={styles.botaoSalvar}
+                        onClick={() => handleSalvarAvaliacao(filme)}
+                        disabled={saving}
+                      >
+                        {saving ? "Salvando..." : "Salvar avaliação"}
+                      </button>
+                      <button
+                        className={styles.botaoCancelar}
+                        onClick={cancelarAvaliacao}
+                      >
+                        Cancelar
+                      </button>
                     </div>
                   </div>
                 )}
