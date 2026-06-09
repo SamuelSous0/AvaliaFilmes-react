@@ -316,3 +316,195 @@
   border-color: rgba(244, 162, 97, 0.5);
   text-shadow: 0 0 10px rgba(244, 162, 97, 0.8);
 }
+
+.containerFilmes {
+  min-height: 100vh;
+  padding: 3rem 5%;
+  gap: 1.5rem;
+  background:
+    radial-gradient(circle at top left, rgba(229, 9, 20, 0.18), transparent 34rem),
+    radial-gradient(circle at top right, rgba(255, 204, 0, 0.12), transparent 26rem),
+    var(--bg-dark);
+}
+
+.cartaoFilmes,
+.listaFilmes {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(26, 26, 26, 0.94);
+  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.35);
+  padding: 32px;
+}
+
+.cartaoFilmes {
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.96), rgba(10, 10, 10, 0.9));
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.cabecalho {
+  display: block;
+  margin-bottom: 0;
+}
+
+.cabecalho h2 {
+  color: var(--primary-color);
+  font-size: clamp(2.2rem, 6vw, 4rem);
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.subtitulo {
+  max-width: 720px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.formulario {
+  margin-top: 1rem;
+}
+
+.grupoFormulario label {
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.grupoFormulario input,
+.grupoFormulario textarea,
+.inputBusca,
+.containerFilmes input:not([type="checkbox"]) {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+  background: #111 !important;
+  color: var(--text-main) !important;
+  outline: none;
+  padding: 0.9rem 1rem !important;
+  font-size: 1rem !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.grupoFormulario input:focus,
+.grupoFormulario textarea:focus,
+.containerFilmes input:not([type="checkbox"]):focus {
+  border-color: rgba(255, 204, 0, 0.65) !important;
+  box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.08);
+}
+
+.listaHeader {
+  margin-bottom: 1rem;
+}
+
+.listaHeader h3 {
+  color: var(--text-main);
+  font-size: 1.6rem;
+}
+
+.listaHeader span {
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  color: var(--accent-color);
+  background: rgba(255, 204, 0, 0.1);
+  border: 1px solid rgba(255, 204, 0, 0.18);
+  font-weight: 900;
+}
+
+.cardFilme {
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 1rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.cardFilme:hover {
+  border-color: rgba(229, 9, 20, 0.35);
+  transform: translateY(-2px);
+}
+
+.capaContainer {
+  width: 96px;
+  height: 140px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0b0b0b;
+}
+
+.cardFilmeTitulo {
+  color: var(--text-main);
+  font-size: 1.25rem;
+}
+
+.cardFilmeNota {
+  color: var(--accent-color);
+  background: rgba(255, 204, 0, 0.1);
+  border: 1px solid rgba(255, 204, 0, 0.18);
+  border-radius: 999px;
+  padding: 0.55rem 0.85rem;
+}
+
+.botaoSalvar,
+.botaoCancelar,
+.botaoEditar,
+.botaoExcluir,
+.botaoFavorito {
+  border-radius: 10px;
+  font-weight: 800;
+  transition: transform 0.2s, filter 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.botaoSalvar {
+  background: var(--primary-color);
+  box-shadow: 0 10px 28px rgba(229, 9, 20, 0.25);
+}
+
+.botaoSalvar:hover { filter: brightness(1.08); }
+
+.botaoCancelar,
+.botaoEditar {
+  background: transparent;
+  color: var(--accent-color);
+  border: 1px solid rgba(255, 204, 0, 0.35);
+}
+
+.botaoExcluir {
+  background: rgba(229, 9, 20, 0.12);
+  color: #ff6b6b;
+  border: 1px solid rgba(229, 9, 20, 0.35);
+}
+
+.botaoFavorito {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 204, 0, 0.28);
+  background: rgba(255, 204, 0, 0.08);
+  color: var(--accent-color);
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.favoritado {
+  background: rgba(255, 204, 0, 0.18);
+}
+
+.mensagem,
+.vazio,
+.carregando {
+  border-radius: 12px;
+}
+
+@media (max-width: 720px) {
+  .containerFilmes { padding: 2rem 1rem; }
+  .cardFilmeTopo { align-items: flex-start; }
+  .listaHeader { align-items: flex-start; flex-direction: column; gap: 0.75rem; }
+}

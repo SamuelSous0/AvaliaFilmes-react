@@ -20,6 +20,11 @@ export async function saveReview(review) {
   return response.data;
 }
 
+export async function updateReview(id, review) {
+  const response = await instance.put(`/reviews/${id}`, review);
+  return response.data;
+}
+
 export async function deleteReview(id) {
   const response = await instance.delete(`/reviews/${id}`);
   return response.data;

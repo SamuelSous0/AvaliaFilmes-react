@@ -238,6 +238,26 @@ export default function GruposPage() {
     }
   };
 
+  const handleFilmeInputChange = (valor) => {
+    setFilmeInput(valor);
+    setFilmeSelecionado(null);
+    if (!valor.trim()) {
+      setFilmeSugestoes([]);
+      return;
+    }
+    const q = valor.toLowerCase();
+    const sugestoes = filmesLista
+      .filter((f) => f.titulo?.toLowerCase().includes(q))
+      .slice(0, 6);
+    setFilmeSugestoes(sugestoes);
+  };
+
+  const handleSelecionarFilme = (filme) => {
+    setFilmeSelecionado({ id: filme.id, label: filme.titulo });
+    setFilmeInput(filme.titulo);
+    setFilmeSugestoes([]);
+  };
+
   const handleAdicionarFilme = async (grupoId) => {
     if (!filmeSelecionado) {
       setMessage({
@@ -402,7 +422,6 @@ export default function GruposPage() {
                   </div>
                 </div>
 
-                {/* conteúdo expandido com animação */}
                 <AnimatePresence initial={false}>
                   {expandidoId === grupo.id && (
                     <motion.div
@@ -461,7 +480,6 @@ export default function GruposPage() {
                   )}
                 </AnimatePresence>
 
-                {/* painel de gerenciamento */}
                 {gerenciandoId === grupo.id && (
                   <div className={styles.painelGerenciar}>
                     <div className={styles.secaoGerenciar}>

@@ -25,6 +25,7 @@
   background-color: var(--bg-page);
   color: var(--text-primary);
   min-height: 100vh;
+  padding: 3rem 5%;
   font-family: 'DM Sans', 'Segoe UI', sans-serif;
 }
 
@@ -687,4 +688,139 @@
   .heroTitle { letter-spacing: 4px; }
   .cardBody { padding: 1rem; }
   .cardFooter { padding: 0.6rem 1rem 1rem; }
+}
+
+.page {
+  background:
+    radial-gradient(circle at top left, rgba(229, 9, 20, 0.18), transparent 34rem),
+    radial-gradient(circle at top right, rgba(255, 204, 0, 0.12), transparent 26rem),
+    var(--bg-dark);
+  color: var(--text-main);
+  min-height: 100vh;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.hero {
+  max-width: none;
+  margin: 0 5% 1.5rem;
+  padding: 2rem;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.96), rgba(10, 10, 10, 0.9));
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.heroGlow,
+.heroGlowSecondary,
+.heroDivider { display: none; }
+
+.heroEyebrow {
+  margin: 0 0 0.45rem;
+  color: var(--accent-color);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.heroTitle {
+  margin: 0;
+  color: var(--primary-color);
+  font-family: inherit;
+  font-size: clamp(2.2rem, 6vw, 4rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  text-shadow: none;
+}
+
+.heroSubtitle {
+  max-width: 720px;
+  margin: 0.85rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.controls {
+  position: static;
+  margin: 0 5% 1.5rem;
+  padding: 1.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(26, 26, 26, 0.94);
+  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.35);
+}
+
+.controlsInner,
+.main {
+  max-width: none;
+}
+
+.main {
+  padding: 0 5% 3rem;
+}
+
+.counterNumber {
+  color: var(--accent-color);
+  font-family: inherit;
+  font-weight: 900;
+}
+
+.searchInput {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: #111;
+  color: var(--text-main);
+}
+
+.searchInput:focus {
+  border-color: rgba(255, 204, 0, 0.65);
+  box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.08);
+}
+
+.card,
+.skeletonCard {
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.25);
+}
+
+.card:hover {
+  border-color: rgba(229, 9, 20, 0.35);
+  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.35);
+}
+
+.year,
+.genreOverlay,
+.favBadge {
+  color: var(--accent-color);
+}
+
+.cardTitle {
+  font-family: inherit;
+  letter-spacing: 0;
+  color: var(--text-main);
+}
+
+.btnPrimary {
+  background: var(--primary-color);
+  border-radius: 10px;
+  font-weight: 800;
+  box-shadow: 0 10px 28px rgba(229, 9, 20, 0.25);
+}
+
+.btnSecondary,
+.btnRemove {
+  border-radius: 10px;
+}
+
+.btnRemove:hover:not(:disabled) {
+  border-color: rgba(229, 9, 20, 0.35);
+  color: #ff6b6b;
+}
+
+@media (max-width: 720px) {
+  .hero,
+  .controls { margin-left: 1rem; margin-right: 1rem; }
+  .main { padding-left: 1rem; padding-right: 1rem; }
 }
