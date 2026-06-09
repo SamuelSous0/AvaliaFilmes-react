@@ -1,7 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAllFilmes, updateFilme } from "../../services/filmeApi";
+import { getAllFilmes } from "../../services/filmeApi";
+import { getAllPerfis, savePerfil } from "../../services/perfilApi";
+import { getUserById } from "../../services/userApi";
+import { deleteReview, getAllReviews, saveReview } from "../../services/reviewApi";
 import styles from "./filmes.module.css";
 
 import {
@@ -26,9 +30,37 @@ async function buscarPoster(titulo) {
   }
 }
 
+const aguardar = (tempoEmMs) => new Promise((resolve) => setTimeout(resolve, tempoEmMs));
+
+const encontrarPerfilDoUsuario = (perfis, nomeUsuario, userId) => {
+  if (!Array.isArray(perfis)) return null;
+
+  return perfis.find((perfil) => {
+    const perfilUserId = perfil.userId ?? perfil.user?.id ?? perfil.usuarioId ?? perfil.usuario?.id;
+    const perfilUsername = perfil.username ?? perfil.user?.username ?? perfil.usuario?.username;
+
+    return (
+      (userId && Number(perfilUserId) === Number(userId)) ||
+      (nomeUsuario && perfilUsername === nomeUsuario)
+    );
+  });
+};
+
+const obterReviewFilmeId = (review) =>
+  review.filmeId ?? review.filme?.id ?? review.filme_id ?? review.movieId ?? null;
+
+const obterPerfilReviewId = (review) =>
+  review.perfilId ?? review.perfil?.id ?? review.perfil_id ?? null;
+
+const formatarNota = (nota) => {
+  const numero = Number(nota);
+  return Number.isFinite(numero) ? numero.toFixed(1) : "—";
+};
+
 export default function FilmesPage() {
   const router = useRouter();
   const [filmes, setFilmes] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [filtrados, setFiltrados] = useState([]);
   const [busca, setBusca] = useState("");
   const [posters, setPosters] = useState({});
@@ -38,16 +70,90 @@ export default function FilmesPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
   const [userId, setUserId] = useState(null);
+  const [perfilId, setPerfilId] = useState(null);
   const [favoritos, setFavoritos] = useState([]);
   const [favoritandoId, setFavoritandoId] = useState(null);
+  const [removingAvaliacaoId, setRemovingAvaliacaoId] = useState(null);
+  const criandoPerfilRef = useRef(false);
 
-  const loadFilmes = async () => {
+  const carregarPerfilLogado = useCallback(async (id, username) => {
+    const [perfisData, userData] = await Promise.all([
+      getAllPerfis(),
+      getUserById(id).catch(() => null),
+    ]);
+
+    const nomeUsuario = userData?.name || userData?.username || username;
+    let perfilLogado = encontrarPerfilDoUsuario(perfisData, nomeUsuario, id);
+
+    if (!perfilLogado?.id) {
+      try {
+        if (criandoPerfilRef.current) {
+          await aguardar(500);
+        } else {
+          criandoPerfilRef.current = true;
+          perfilLogado = await savePerfil({
+            userId: Number(id),
+            biografia: "",
+            fotoUrl: "",
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao criar perfil inicial:", error);
+      } finally {
+        criandoPerfilRef.current = false;
+      }
+
+      if (!perfilLogado?.id) {
+        const perfisAtualizados = await getAllPerfis();
+        perfilLogado = encontrarPerfilDoUsuario(perfisAtualizados, nomeUsuario, id);
+      }
+    }
+
+    if (perfilLogado?.id) {
+      localStorage.setItem("perfilId", perfilLogado.id);
+    }
+
+    setPerfilId(perfilLogado?.id || null);
+    return perfilLogado?.id || null;
+  }, []);
+
+  const loadFavoritos = async (id) => {
+    try {
+      const data = await getFavoritosByUser(id);
+      setFavoritos(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Erro ao carregar favoritos:", error);
+    }
+  };
+
+  const loadFilmes = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getAllFilmes();
-      const lista = Array.isArray(data) ? data : [];
+
+      const id = localStorage.getItem("userId");
+      const username = localStorage.getItem("username");
+
+      if (!id) {
+        router.push("/login");
+        return;
+      }
+
+      setUserId(id);
+
+      const [filmesData, reviewsData] = await Promise.all([
+        getAllFilmes(),
+        getAllReviews(),
+      ]);
+
+      const lista = Array.isArray(filmesData) ? filmesData : [];
       setFilmes(lista);
       setFiltrados(lista);
+      setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+
+      await Promise.all([
+        carregarPerfilLogado(id, username),
+        loadFavoritos(id),
+      ]);
 
       const postersMap = {};
       await Promise.all(
@@ -64,16 +170,22 @@ export default function FilmesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [carregarPerfilLogado, router]);
 
-  const loadFavoritos = async (id) => {
-    try {
-      const data = await getFavoritosByUser(id);
-      setFavoritos(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Erro ao carregar favoritos:", error);
-    }
-  };
+  const minhasReviewsPorFilme = useMemo(() => {
+    const mapa = new Map();
+
+    reviews.forEach((review) => {
+      const reviewPerfilId = obterPerfilReviewId(review);
+      const reviewFilmeId = obterReviewFilmeId(review);
+
+      if (Number(reviewPerfilId) === Number(perfilId) && reviewFilmeId != null) {
+        mapa.set(Number(reviewFilmeId), review);
+      }
+    });
+
+    return mapa;
+  }, [reviews, perfilId]);
 
   const verificarFavorito = (filmeId) => {
     return favoritos.find((fav) => fav.filme?.id === filmeId);
@@ -105,19 +217,13 @@ export default function FilmesPage() {
   };
 
   useEffect(() => {
-    const id = localStorage.getItem("userId");
-    if (!id) {
-      router.push("/login");
-      return;
-    }
-
-    setUserId(id);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadFilmes();
-    loadFavoritos(id);
-  }, [router]);
+  }, [loadFilmes]);
 
   useEffect(() => {
     if (!busca.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFiltrados(filmes);
     } else {
       setFiltrados(
@@ -134,9 +240,14 @@ export default function FilmesPage() {
   const handleChange = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
   const abrirAvaliacao = (filme) => {
+    const minhaReview = minhasReviewsPorFilme.get(Number(filme.id));
+
     setAvaliacaoAbertaId(filme.id);
-    setForm({ rating: filme.rating != null ? String(filme.rating) : "", review: filme.review || "" });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setForm({
+      rating: minhaReview?.nota != null ? String(minhaReview.nota) : "",
+      review: minhaReview?.comentario || "",
+    });
+    setMessage({ text: "", type: "" });
   };
 
   const cancelarAvaliacao = () => {
@@ -145,28 +256,83 @@ export default function FilmesPage() {
     setMessage({ text: "", type: "" });
   };
 
-  const handleSalvarAvaliacao = async (id) => {
-    if (form.rating && (isNaN(Number(form.rating)) || Number(form.rating) < 0 || Number(form.rating) > 10)) {
-      setMessage({ text: "Avaliação deve ficar entre 0 e 10.", type: "error" });
+  const validarAvaliacao = () => {
+    const nota = Number(form.rating);
+
+    if (!perfilId) {
+      return "Não foi possível identificar seu perfil. Atualize a página e tente novamente.";
+    }
+
+    if (Number.isNaN(nota) || nota < 0 || nota > 5) {
+      return "Avaliação deve ficar entre 0 e 5.";
+    }
+
+    if (!form.review.trim()) {
+      return "Escreva um comentário para publicar sua review.";
+    }
+
+    return null;
+  };
+
+  const handleSalvarAvaliacao = async (filme) => {
+    const erro = validarAvaliacao();
+    if (erro) {
+      setMessage({ text: erro, type: "error" });
       return;
     }
 
-    const payload = {
-      rating: form.rating ? Number(form.rating) : null,
-      review: form.review ? form.review.trim() : "",
-    };
+    const reviewExistente = minhasReviewsPorFilme.get(Number(filme.id));
 
     try {
       setSaving(true);
-      await updateFilme(id, payload);
-      setMessage({ text: "Avaliação salva com sucesso.", type: "success" });
-      cancelarAvaliacao();
-      loadFilmes();
+
+      if (reviewExistente?.id) {
+        await deleteReview(reviewExistente.id);
+      }
+
+      await saveReview({
+        filmeId: Number(filme.id),
+        perfilId: Number(perfilId),
+        nota: Number(form.rating),
+        comentario: form.review.trim(),
+      });
+
+      setMessage({ text: "Avaliação salva e enviada para suas reviews.", type: "success" });
+      setAvaliacaoAbertaId(null);
+      setForm(initialForm);
+      await loadFilmes();
     } catch (error) {
       console.error(error);
       setMessage({ text: "Erro ao salvar avaliação.", type: "error" });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRemoverAvaliacao = async (filme) => {
+    const reviewExistente = minhasReviewsPorFilme.get(Number(filme.id));
+
+    if (!reviewExistente?.id) {
+      setMessage({ text: "Nenhuma avaliação encontrada para remover.", type: "error" });
+      return;
+    }
+
+    try {
+      setRemovingAvaliacaoId(filme.id);
+      await deleteReview(reviewExistente.id);
+      setMessage({ text: "Avaliação removida das suas reviews.", type: "success" });
+
+      if (avaliacaoAbertaId === filme.id) {
+        setAvaliacaoAbertaId(null);
+        setForm(initialForm);
+      }
+
+      await loadFilmes();
+    } catch (error) {
+      console.error(error);
+      setMessage({ text: "Erro ao remover avaliação.", type: "error" });
+    } finally {
+      setRemovingAvaliacaoId(null);
     }
   };
 
@@ -176,7 +342,7 @@ export default function FilmesPage() {
         <div className={styles.cabecalho}>
           <div>
             <h2>Filmes</h2>
-            <p className={styles.subtitulo}>Visualize filmes, busque, marque favoritos e avalie.</p>
+            <p className={styles.subtitulo}>Visualize filmes, busque, marque favoritos e publique reviews com nota de 0 a 5.</p>
           </div>
         </div>
 
@@ -217,6 +383,7 @@ export default function FilmesPage() {
           <div className={styles.vazio}>Nenhum filme encontrado.</div>
         ) : (
           filtrados.map((filme) => {
+            const minhaReview = minhasReviewsPorFilme.get(Number(filme.id));
             const cover = posters[filme.id] || filme.coverUrl || filme.posterUrl || filme.capa || filme.image || filme.poster || filme.imagem;
             return (
               <div key={filme.id} className={styles.cardFilme}>
@@ -238,15 +405,31 @@ export default function FilmesPage() {
                     <p className={styles.cardFilmeTitulo}>{filme.titulo || filme.title}</p>
                     <p className={styles.cardFilmeDetalhe}>{(filme.diretor || filme.director) + " • " + (filme.anoLancamento || filme.year || "Ano não informado")}</p>
                     {filme.genero && <p className={styles.cardFilmeDetalhe}>{filme.genero}</p>}
+                    {minhaReview && (
+                      <p className={styles.cardFilmeDetalhe}>
+                        Sua review: {formatarNota(minhaReview.nota)}/5.0
+                      </p>
+                    )}
                   </div>
 
-                  <div className={styles.cardFilmeNota}>{filme.rating != null ? `${filme.rating}/10` : "—"}</div>
+                  <div className={styles.cardFilmeNota}>{minhaReview ? `${formatarNota(minhaReview.nota)}/5.0` : "—"}</div>
                 </div>
 
-                {filme.review && <p className={styles.cardFilmeDescricao}>{filme.review}</p>}
+                {minhaReview?.comentario && <p className={styles.cardFilmeDescricao}>{minhaReview.comentario}</p>}
 
                 <div className={styles.cardFilmeAcoes}>
-                  <button className={styles.botaoEditar} onClick={() => abrirAvaliacao(filme)}>{filme.rating != null ? "Editar avaliação" : "Avaliar"}</button>
+                  <button className={styles.botaoEditar} onClick={() => abrirAvaliacao(filme)}>
+                    {minhaReview ? "Editar avaliação" : "Avaliar"}
+                  </button>
+                  {minhaReview && (
+                    <button
+                      className={styles.botaoCancelar}
+                      onClick={() => handleRemoverAvaliacao(filme)}
+                      disabled={removingAvaliacaoId === filme.id}
+                    >
+                      {removingAvaliacaoId === filme.id ? "Removendo..." : "Remover avaliação"}
+                    </button>
+                  )}
                 </div>
 
                 {avaliacaoAbertaId === filme.id && (
@@ -254,7 +437,15 @@ export default function FilmesPage() {
                     <div className={styles.linhaFormulario}>
                       <div className={styles.grupoFormulario}>
                         <label>Avaliação</label>
-                        <input value={form.rating} onChange={(e) => handleChange("rating", e.target.value)} placeholder="0 a 10" />
+                        <input
+                          type="number"
+                          min="0"
+                          max="5"
+                          step="0.5"
+                          value={form.rating}
+                          onChange={(e) => handleChange("rating", e.target.value)}
+                          placeholder="0 a 5"
+                        />
                       </div>
                     </div>
                     <div className={styles.grupoFormulario}>
@@ -262,7 +453,7 @@ export default function FilmesPage() {
                       <textarea value={form.review} onChange={(e) => handleChange("review", e.target.value)} placeholder="Seu comentário sobre o filme" />
                     </div>
                     <div className={styles.acoes}>
-                      <button className={styles.botaoSalvar} onClick={() => handleSalvarAvaliacao(filme.id)} disabled={saving}>{saving ? "Salvando..." : "Salvar avaliação"}</button>
+                      <button className={styles.botaoSalvar} onClick={() => handleSalvarAvaliacao(filme)} disabled={saving}>{saving ? "Salvando..." : "Salvar avaliação"}</button>
                       <button className={styles.botaoCancelar} onClick={cancelarAvaliacao}>Cancelar</button>
                     </div>
                   </div>

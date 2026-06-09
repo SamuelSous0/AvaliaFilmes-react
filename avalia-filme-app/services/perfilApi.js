@@ -24,3 +24,8 @@ export async function deletePerfil(id) {
   const response = await instance.delete(`/perfis/${id}`);
   return response.data;
 }
+
+export async function updatePerfil(id, perfilData) {
+  const response = await instance.put(`/perfis/${id}`, perfilData);
+  return response.data;
+}

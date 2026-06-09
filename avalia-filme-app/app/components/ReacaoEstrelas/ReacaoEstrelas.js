@@ -54,6 +54,7 @@ export default function ReacaoEstrelas({ reviewId }) {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (reviewId) loadDados();
   }, [reviewId, perfilId]);
 

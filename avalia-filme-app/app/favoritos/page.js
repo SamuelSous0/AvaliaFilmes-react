@@ -83,6 +83,7 @@ export default function FavoritosPage() {
   }, []);
 
   useEffect(() => {
+    
     const id = localStorage.getItem("userId");
 
     if (!id) {
@@ -90,6 +91,7 @@ export default function FavoritosPage() {
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     carregarFavoritos(id);
   }, [router, carregarFavoritos]);
 
@@ -97,6 +99,7 @@ export default function FavoritosPage() {
     const termo = busca.toLowerCase().trim();
 
     if (!termo) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFiltrados(favoritos);
       return;
     }
@@ -138,7 +141,6 @@ export default function FavoritosPage() {
         <div className={styles.heroGlowSecondary} aria-hidden="true" />
 
         <div className={styles.heroContent}>
-          <p className={styles.heroEyebrow}>AvaliaFilmes</p>
           <h1 className={styles.heroTitle}>Meus Favoritos</h1>
           <p className={styles.heroSubtitle}>
             Sua coleção pessoal dos filmes que mais marcaram sua experiência.

@@ -28,8 +28,6 @@ export default function GruposPage() {
   const [expandidoId, setExpandidoId] = useState(null);
   const [membroInput, setMembroInput] = useState("");
   const [filmeInput, setFilmeInput] = useState("");
-  const [filmeSelecionado, setFilmeSelecionado] = useState(null);
-  const [filmeSugestoes, setFilmeSugestoes] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
@@ -161,8 +159,6 @@ export default function GruposPage() {
     setGerenciandoId((prev) => (prev === id ? null : id));
     setMembroInput("");
     setFilmeInput("");
-    setFilmeSelecionado(null);
-    setFilmeSugestoes([]);
   };
 
   const toggleExpandir = (id) => {
@@ -225,16 +221,11 @@ export default function GruposPage() {
   };
 
   const handleAdicionarFilme = async (grupoId) => {
-    if (!filmeSelecionado) {
-      setMessage({ text: "Selecione um filme válido da lista.", type: "error" });
-      return;
-    }
+    if (!filmeInput.trim()) return;
     try {
-      await adicionarFilme(grupoId, filmeSelecionado.id);
+      await adicionarFilme(grupoId, Number(filmeInput));
       setMessage({ text: "Filme adicionado com sucesso.", type: "success" });
       setFilmeInput("");
-      setFilmeSelecionado(null);
-      setFilmeSugestoes([]);
       mutate();
     } catch (error) {
       console.error(error);
@@ -448,32 +439,15 @@ export default function GruposPage() {
                     <div className={styles.secaoGerenciar}>
                       <p className={styles.secaoTitulo}>Adicionar filme</p>
                       <div className={styles.linhaAdicionar}>
-                        <div className={styles.inputComSugestoes}>
-                          <input
-                            value={filmeInput}
-                            onChange={(e) => handleFilmeInputChange(e.target.value)}
-                            placeholder="Buscar filme pelo título"
-                            className={styles.inputGerenciar}
-                            autoComplete="off"
-                          />
-                          {filmeSugestoes.length > 0 && (
-                            <ul className={styles.sugestoesLista}>
-                              {filmeSugestoes.map((f) => (
-                                <li
-                                  key={f.id}
-                                  className={styles.sugestaoItem}
-                                  onMouseDown={() => handleSelecionarFilme(f)}
-                                >
-                                  <span className={styles.sugestaoNome}>{f.titulo}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
+                        <input
+                          value={filmeInput}
+                          onChange={(e) => setFilmeInput(e.target.value)}
+                          placeholder="Nome do filme"
+                          className={styles.inputGerenciar}
+                        />
                         <button
                           className={styles.botaoAdicionar}
                           onClick={() => handleAdicionarFilme(grupo.id)}
-                          disabled={!filmeSelecionado}
                         >
                           Adicionar
                         </button>

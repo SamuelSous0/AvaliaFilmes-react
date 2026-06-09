@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import FilmePoster from "../components/FilmePoster/FilmePoster";
 import ReacaoEstrelas from "../components/ReacaoEstrelas/ReacaoEstrelas";
 import { getAllFilmes } from "../../services/filmeApi";
-import { getAllPerfis } from "../../services/perfilApi";
+import { getAllPerfis, savePerfil } from "../../services/perfilApi";
+import { getUserById } from "../../services/userApi";
 import { deleteReview, getAllReviews, saveReview } from "../../services/reviewApi";
 import styles from "./reviews.module.css";
 
@@ -16,6 +17,16 @@ const initialForm = {
   comentario: "",
 };
 
+const encontrarPerfilDoUsuario = (perfis, nomeUsuario) => {
+  if (!Array.isArray(perfis)) return null;
+
+  return perfis.find(
+    (perfil) => perfil.username === nomeUsuario || perfil.user?.username === nomeUsuario
+  );
+};
+
+const aguardar = (tempoEmMs) => new Promise((resolve) => setTimeout(resolve, tempoEmMs));
+
 export default function ReviewsPage() {
   const router = useRouter();
   const [perfilId, setPerfilId] = useState(null);
@@ -23,12 +34,13 @@ export default function ReviewsPage() {
   const [reviews, setReviews] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState(null);
   const [busca, setBusca] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [removingId, setRemovingId] = useState(null);
   const [message, setMessage] = useState({ text: "", type: "" });
-
+  const criandoPerfilRef = useRef(false);
   const carregarDados = useCallback(async () => {
     try {
       setLoading(true);
@@ -41,21 +53,42 @@ export default function ReviewsPage() {
         return;
       }
 
-      const [reviewsData, filmesData, perfisData] = await Promise.all([
+      const [reviewsData, filmesData, perfisData, userData] = await Promise.all([
         getAllReviews(),
         getAllFilmes(),
         getAllPerfis(),
+        getUserById(userId),
       ]);
 
-      const perfilLogado = Array.isArray(perfisData)
-        ? perfisData.find((perfil) => perfil.username === username || perfil.user?.username === username)
-        : null;
+      const nomeUsuario = userData?.name || username;
+      let perfilLogado = encontrarPerfilDoUsuario(perfisData, nomeUsuario);
 
       if (!perfilLogado?.id) {
-        setMessage({
-          text: "Não encontramos um perfil vinculado ao seu usuário. Crie/complete seu perfil antes de publicar reviews.",
-          type: "error",
-        });
+        try {
+          if (criandoPerfilRef.current) {
+            await aguardar(500);
+          } else {
+            criandoPerfilRef.current = true;
+            perfilLogado = await savePerfil({
+              userId: Number(userId),
+              biografia: "",
+              fotoUrl: "",
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao criar perfil inicial:", error);
+        } finally {
+          criandoPerfilRef.current = false;
+        }
+
+        if (!perfilLogado?.id) {
+          const perfisAtualizados = await getAllPerfis();
+          perfilLogado = encontrarPerfilDoUsuario(perfisAtualizados, nomeUsuario);
+        }
+      }
+
+      if (perfilLogado?.id) {
+        localStorage.setItem("perfilId", perfilLogado.id);
       }
 
       setPerfilId(perfilLogado?.id || null);
@@ -99,6 +132,31 @@ export default function ReviewsPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const abrirNovaReview = () => {
+    setEditingReviewId(null);
+    setForm(initialForm);
+    setShowForm((prev) => !prev);
+    setMessage({ text: "", type: "" });
+  };
+
+  const abrirEdicaoReview = (review) => {
+    setEditingReviewId(review.id);
+    setForm({
+      filmeId: String(review.filmeId ?? review.filme?.id ?? ""),
+      nota: review.nota != null ? String(review.nota) : "",
+      comentario: review.comentario || "",
+    });
+    setShowForm(true);
+    setMessage({ text: "", type: "" });
+  };
+
+  const fecharFormulario = () => {
+    setEditingReviewId(null);
+    setForm(initialForm);
+    setShowForm(false);
+    setMessage({ text: "", type: "" });
+  };
+
   const validarFormulario = () => {
     const nota = Number(form.nota);
 
@@ -110,8 +168,8 @@ export default function ReviewsPage() {
       return "Selecione um filme para criar a review.";
     }
 
-    if (Number.isNaN(nota) || nota < 0 || nota > 10) {
-      return "A nota deve ser um número entre 0 e 10.";
+    if (Number.isNaN(nota) || nota < 0 || nota > 5) {
+      return "A nota deve ser um número entre 0 e 5.";
     }
 
     if (!form.comentario.trim()) {
@@ -134,6 +192,15 @@ export default function ReviewsPage() {
     try {
       setSaving(true);
 
+      const reviewDoMesmoFilme = minhasReviews.find((review) =>
+        Number(review.filmeId ?? review.filme?.id) === Number(form.filmeId)
+      );
+      const reviewParaSubstituirId = editingReviewId || reviewDoMesmoFilme?.id;
+
+      if (reviewParaSubstituirId) {
+        await deleteReview(reviewParaSubstituirId);
+      }
+
       await saveReview({
         filmeId: Number(form.filmeId),
         perfilId: Number(perfilId),
@@ -141,13 +208,17 @@ export default function ReviewsPage() {
         comentario: form.comentario.trim(),
       });
 
-      setMessage({ text: "Review publicada com sucesso!", type: "success" });
+      setMessage({
+        text: editingReviewId ? "Review atualizada com sucesso!" : "Review publicada com sucesso!",
+        type: "success",
+      });
       setForm(initialForm);
+      setEditingReviewId(null);
       setShowForm(false);
       await carregarDados();
     } catch (error) {
       console.error(error);
-      setMessage({ text: "Erro ao publicar review. Tente novamente.", type: "error" });
+      setMessage({ text: "Erro ao salvar review. Tente novamente.", type: "error" });
     } finally {
       setSaving(false);
     }
@@ -171,7 +242,6 @@ export default function ReviewsPage() {
     <main className={styles.page}>
       <section className={styles.hero}>
         <div>
-          <p className={styles.eyebrow}>AvaliaFilmes</p>
           <h1>Reviews</h1>
           <p className={styles.subtitle}>
             Publique suas opiniões e acompanhe o que outros usuários estão falando sobre seus filmes favoritos.
@@ -180,7 +250,7 @@ export default function ReviewsPage() {
 
         <motion.button
           className={styles.primaryButton}
-          onClick={() => setShowForm((prev) => !prev)}
+          onClick={abrirNovaReview}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.96 }}
           disabled={!perfilId}
@@ -205,8 +275,8 @@ export default function ReviewsPage() {
             exit={{ opacity: 0, y: -16 }}
           >
             <div className={styles.formHeader}>
-              <h2>Criar nova review</h2>
-              <span>Nota de 0 a 10</span>
+              <h2>{editingReviewId ? "Editar review" : "Criar nova review"}</h2>
+              <span>Nota de 0 a 5</span>
             </div>
 
             <div className={styles.formGrid}>
@@ -227,9 +297,9 @@ export default function ReviewsPage() {
                 <input
                   type="number"
                   min="0"
-                  max="10"
+                  max="5"
                   step="0.5"
-                  placeholder="Ex.: 8.5"
+                  placeholder="Ex.: 4.5"
                   value={form.nota}
                   onChange={(event) => handleChange("nota", event.target.value)}
                 />
@@ -249,9 +319,9 @@ export default function ReviewsPage() {
 
             <div className={styles.formActions}>
               <button className={styles.primaryButton} type="submit" disabled={saving}>
-                {saving ? "Publicando..." : "Publicar review"}
+                {saving ? "Salvando..." : editingReviewId ? "Salvar alterações" : "Publicar review"}
               </button>
-              <button className={styles.secondaryButton} type="button" onClick={() => setShowForm(false)}>
+              <button className={styles.secondaryButton} type="button" onClick={fecharFormulario}>
                 Cancelar
               </button>
             </div>
@@ -281,6 +351,7 @@ export default function ReviewsPage() {
                   review={review}
                   isMine
                   removing={removingId === review.id}
+                  onEdit={() => abrirEdicaoReview(review)}
                   onRemove={() => handleRemoverReview(review.id)}
                 />
               ))}
@@ -312,7 +383,7 @@ export default function ReviewsPage() {
           ) : (
             <div className={styles.reviewList}>
               {reviewsDeOutros.map((review) => (
-                <ReviewCard key={review.id} review={review} />
+                <ReviewCard key={review.id} review={review} perfilId={perfilId} />
               ))}
             </div>
           )}
@@ -322,7 +393,7 @@ export default function ReviewsPage() {
   );
 }
 
-function ReviewCard({ review, isMine = false, removing = false, onRemove }) {
+function ReviewCard({ review, isMine = false, removing = false, perfilId = null, onEdit, onRemove }) {
   return (
     <motion.article className={styles.reviewCard} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       <div className={styles.posterBox}>
@@ -337,19 +408,24 @@ function ReviewCard({ review, isMine = false, removing = false, onRemove }) {
 
         <h3>{review.filmeTitulo || "Filme sem título"}</h3>
 
-        <div className={styles.ratingLine} aria-label={`Nota ${review.nota} de 10`}>
+        <div className={styles.ratingLine} aria-label={`Nota ${Number(review.nota).toFixed(1)} de 5.0`}>
           <span className={styles.ratingStars}>{renderStars(review.nota)}</span>
-          <strong>{Number(review.nota).toFixed(1)}/10</strong>
+          <strong>{Number(review.nota).toFixed(1)}/5.0</strong>
         </div>
 
         <p className={styles.comment}>{review.comentario}</p>
 
-        {!isMine && <ReacaoEstrelas reviewId={review.id} />}
+        {!isMine && <ReacaoEstrelas reviewId={review.id} perfilId={perfilId} />}
 
         {isMine && (
-          <button className={styles.dangerButton} onClick={onRemove} disabled={removing}>
-            {removing ? "Removendo..." : "Remover review"}
-          </button>
+          <div className={styles.formActions}>
+            <button className={styles.secondaryButton} type="button" onClick={onEdit}>
+              Editar review
+            </button>
+            <button className={styles.dangerButton} type="button" onClick={onRemove} disabled={removing}>
+              {removing ? "Removendo..." : "Remover review"}
+            </button>
+          </div>
         )}
       </div>
     </motion.article>
@@ -394,6 +470,6 @@ function formatDate(date) {
 }
 
 function renderStars(nota = 0) {
-  const stars = Math.round(Number(nota) / 2);
+  const stars = Math.round(Number(nota));
   return "★".repeat(stars).padEnd(5, "☆");
 }
