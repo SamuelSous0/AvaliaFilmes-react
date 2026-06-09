@@ -58,6 +58,34 @@ export default function GruposPage() {
   );
 
   const grupos = useMemo(() => Array.isArray(data) ? data : [], [data]);
+  const perfis = useMemo(() => Array.isArray(perfisData) ? perfisData : [], [perfisData]);
+  const filmesLista = useMemo(() => Array.isArray(filmesData) ? filmesData : [], [filmesData]);
+
+  const obterNomePerfil = (perfil) =>
+    perfil?.username ||
+    perfil?.user?.username ||
+    perfil?.nome ||
+    `Usuário #${perfil?.userId || perfil?.user?.id || perfil?.id}`;
+
+  const encontrarPerfilPorEntrada = (entrada) => {
+    const valor = entrada.trim();
+    if (!valor) return null;
+
+    const valorNormalizado = valor.toLowerCase();
+    const valorNumerico = Number(valor);
+    const ehNumero = !Number.isNaN(valorNumerico);
+
+    return perfis.find((perfil) => {
+      const perfilId = Number(perfil?.id);
+      const usuarioId = Number(perfil?.userId ?? perfil?.user?.id);
+      const username = (perfil?.username || perfil?.user?.username || perfil?.nome || "").toLowerCase();
+
+      return (
+        (ehNumero && (usuarioId === valorNumerico || perfilId === valorNumerico)) ||
+        username === valorNormalizado
+      );
+    });
+  };
 
   const filtrados = useMemo(() => {
     if (!busca.trim()) return grupos;
@@ -141,31 +169,21 @@ export default function GruposPage() {
     setExpandidoId((prev) => (prev === id ? null : id));
   };
 
-  const handleFilmeInputChange = (valor) => {
-    setFilmeInput(valor);
-    setFilmeSelecionado(null);
-    if (!valor.trim()) {
-      setFilmeSugestoes([]);
+  const handleAdicionarMembro = async (grupoId) => {
+    if (!membroInput.trim()) return;
+
+    const perfilEncontrado = encontrarPerfilPorEntrada(membroInput);
+
+    if (!perfilEncontrado?.id) {
+      setMessage({
+        text: "Nenhum perfil encontrado para esse usuário. Verifique se o backend já está retornando userId em /perfis/all ou tente pelo username.",
+        type: "error",
+      });
       return;
     }
-    const filmes = Array.isArray(filmesData) ? filmesData : [];
-    const q = valor.toLowerCase();
-    const sugestoes = filmes
-      .filter((f) => f.titulo?.toLowerCase().includes(q))
-      .slice(0, 6);
-    setFilmeSugestoes(sugestoes);
-  };
 
-  const handleSelecionarFilme = (filme) => {
-    setFilmeSelecionado({ id: filme.id, label: filme.titulo });
-    setFilmeInput(filme.titulo);
-    setFilmeSugestoes([]);
-  };
-
-  const handleAdicionarMembro = async (grupoId) => {
-  if (!membroInput.trim()) return;
     try {
-      await adicionarMembro(grupoId, Number(membroInput));
+      await adicionarMembro(grupoId, Number(perfilEncontrado.id));
       setMessage({ text: "Membro adicionado com sucesso.", type: "success" });
       setMembroInput("");
       mutate();
@@ -184,6 +202,26 @@ export default function GruposPage() {
       console.error(error);
       setMessage({ text: "Erro ao remover membro.", type: "error" });
     }
+  };
+
+  const handleFilmeInputChange = (valor) => {
+    setFilmeInput(valor);
+    setFilmeSelecionado(null);
+    if (!valor.trim()) {
+      setFilmeSugestoes([]);
+      return;
+    }
+    const q = valor.toLowerCase();
+    const sugestoes = filmesLista
+      .filter((f) => f.titulo?.toLowerCase().includes(q))
+      .slice(0, 6);
+    setFilmeSugestoes(sugestoes);
+  };
+
+  const handleSelecionarFilme = (filme) => {
+    setFilmeSelecionado({ id: filme.id, label: filme.titulo });
+    setFilmeInput(filme.titulo);
+    setFilmeSugestoes([]);
   };
 
   const handleAdicionarFilme = async (grupoId) => {
@@ -321,7 +359,6 @@ export default function GruposPage() {
                   </div>
                 </div>
 
-                {/* conteúdo expandido com animação */}
                 <AnimatePresence initial={false}>
                   {expandidoId === grupo.id && (
                     <motion.div
@@ -341,7 +378,7 @@ export default function GruposPage() {
                               <div className={styles.membrosLista}>
                                 {grupo.membros.map((m) => (
                                   <span key={m.id} className={styles.membroTag}>
-                                    {m.user ? `${m.user.username} #${m.user.id}` : `Usuário #${m.id}`}
+                                    {obterNomePerfil(m)}
                                   </span>
                                 ))}
                               </div>
@@ -372,7 +409,6 @@ export default function GruposPage() {
                   )}
                 </AnimatePresence>
 
-                {/* painel de gerenciamento */}
                 {gerenciandoId === grupo.id && (
                   <div className={styles.painelGerenciar}>
 
@@ -382,7 +418,7 @@ export default function GruposPage() {
                         <input
                           value={membroInput}
                           onChange={(e) => setMembroInput(e.target.value)}
-                          placeholder="ID do membro Ex: 5"
+                          placeholder="ID da navbar, username ou ID do perfil"
                           className={styles.inputGerenciar}
                         />
                         <button
@@ -396,7 +432,7 @@ export default function GruposPage() {
                         <div className={styles.listaTags}>
                           {grupo.membros.map((m) => (
                             <span key={m.id} className={styles.tag}>
-                               {m.user ? `${m.user.username} #${m.user.id}` : `Usuário #${m.id}`}
+                              {obterNomePerfil(m)}
                               <button
                                 className={styles.tagRemover}
                                 onClick={() => handleRemoverMembro(grupo.id, m.id)}
