@@ -28,6 +28,8 @@ export default function GruposPage() {
   const [expandidoId, setExpandidoId] = useState(null);
   const [membroInput, setMembroInput] = useState("");
   const [filmeInput, setFilmeInput] = useState("");
+  const [filmeSelecionado, setFilmeSelecionado] = useState(null);
+  const [filmeSugestoes, setFilmeSugestoes] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
@@ -159,6 +161,8 @@ export default function GruposPage() {
     setGerenciandoId((prev) => (prev === id ? null : id));
     setMembroInput("");
     setFilmeInput("");
+    setFilmeSelecionado(null);
+    setFilmeSugestoes([]);
   };
 
   const toggleExpandir = (id) => {
@@ -209,23 +213,29 @@ export default function GruposPage() {
     }
     const q = valor.toLowerCase();
     const sugestoes = filmesLista
-      .filter((f) => f.titulo?.toLowerCase().includes(q))
+      .filter((f) => (f.titulo || f.title || "").toLowerCase().includes(q))
       .slice(0, 6);
     setFilmeSugestoes(sugestoes);
   };
 
   const handleSelecionarFilme = (filme) => {
-    setFilmeSelecionado({ id: filme.id, label: filme.titulo });
-    setFilmeInput(filme.titulo);
+    setFilmeSelecionado({ id: filme.id, label: filme.titulo || filme.title });
+    setFilmeInput(filme.titulo || filme.title || `Filme #${filme.id}`);
     setFilmeSugestoes([]);
   };
 
   const handleAdicionarFilme = async (grupoId) => {
-    if (!filmeInput.trim()) return;
+    if (!filmeSelecionado?.id) {
+      setMessage({ text: "Selecione um filme válido da lista.", type: "error" });
+      return;
+    }
+
     try {
-      await adicionarFilme(grupoId, Number(filmeInput));
+      await adicionarFilme(grupoId, Number(filmeSelecionado.id));
       setMessage({ text: "Filme adicionado com sucesso.", type: "success" });
       setFilmeInput("");
+      setFilmeSelecionado(null);
+      setFilmeSugestoes([]);
       mutate();
     } catch (error) {
       console.error(error);
@@ -439,15 +449,35 @@ export default function GruposPage() {
                     <div className={styles.secaoGerenciar}>
                       <p className={styles.secaoTitulo}>Adicionar filme</p>
                       <div className={styles.linhaAdicionar}>
-                        <input
-                          value={filmeInput}
-                          onChange={(e) => setFilmeInput(e.target.value)}
-                          placeholder="Nome do filme"
-                          className={styles.inputGerenciar}
-                        />
+                        <div className={styles.inputComSugestoes}>
+                          <input
+                            value={filmeInput}
+                            onChange={(e) => handleFilmeInputChange(e.target.value)}
+                            placeholder="Buscar filme pelo título"
+                            className={styles.inputGerenciar}
+                            autoComplete="off"
+                          />
+
+                          {filmeSugestoes.length > 0 && (
+                            <div className={styles.sugestoesLista}>
+                              {filmeSugestoes.map((f) => (
+                                <button
+                                  key={f.id}
+                                  type="button"
+                                  className={styles.sugestaoItem}
+                                  onMouseDown={() => handleSelecionarFilme(f)}
+                                >
+                                  {f.titulo || f.title || `Filme #${f.id}`}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
                         <button
                           className={styles.botaoAdicionar}
                           onClick={() => handleAdicionarFilme(grupo.id)}
+                          disabled={!filmeSelecionado}
                         >
                           Adicionar
                         </button>
