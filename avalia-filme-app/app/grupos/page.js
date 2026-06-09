@@ -28,6 +28,8 @@ export default function GruposPage() {
   const [expandidoId, setExpandidoId] = useState(null);
   const [membroInput, setMembroInput] = useState("");
   const [filmeInput, setFilmeInput] = useState("");
+  const [filmeSelecionado, setFilmeSelecionado] = useState(null);
+  const [filmeSugestoes, setFilmeSugestoes] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
@@ -40,23 +42,31 @@ export default function GruposPage() {
 
   const { data, isLoading, mutate } = useSWR(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/grupos/allGrupos`,
-    fetcher
+    fetcher,
   );
 
   const { data: perfisData } = useSWR(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/perfis/all`,
     fetcher,
-    { revalidateOnFocus: false }
+    { revalidateOnFocus: false },
   );
 
   const { data: filmesData } = useSWR(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/filmes/allFilmes`,
     fetcher,
-    { revalidateOnFocus: false }
+    { revalidateOnFocus: false },
   );
 
-  const grupos = useMemo(() => Array.isArray(data) ? data : [], [data]);
-  const perfis = useMemo(() => Array.isArray(perfisData) ? perfisData : [], [perfisData]);
+  const grupos = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+  const perfis = useMemo(
+    () => (Array.isArray(perfisData) ? perfisData : []),
+    [perfisData],
+  );
+
+  const filmesLista = useMemo(
+    () => (Array.isArray(filmesData) ? filmesData : []),
+    [filmesData],
+  );
 
   const obterNomePerfil = (perfil) =>
     perfil?.username ||
@@ -75,10 +85,16 @@ export default function GruposPage() {
     return perfis.find((perfil) => {
       const perfilId = Number(perfil?.id);
       const usuarioId = Number(perfil?.userId ?? perfil?.user?.id);
-      const username = (perfil?.username || perfil?.user?.username || perfil?.nome || "").toLowerCase();
+      const username = (
+        perfil?.username ||
+        perfil?.user?.username ||
+        perfil?.nome ||
+        ""
+      ).toLowerCase();
 
       return (
-        (ehNumero && (usuarioId === valorNumerico || perfilId === valorNumerico)) ||
+        (ehNumero &&
+          (usuarioId === valorNumerico || perfilId === valorNumerico)) ||
         username === valorNormalizado
       );
     });
@@ -87,7 +103,7 @@ export default function GruposPage() {
   const filtrados = useMemo(() => {
     if (!busca.trim()) return grupos;
     return grupos.filter((g) =>
-      g.nome?.toLowerCase().includes(busca.toLowerCase())
+      g.nome?.toLowerCase().includes(busca.toLowerCase()),
     );
   }, [busca, grupos]);
 
@@ -96,7 +112,10 @@ export default function GruposPage() {
 
   const handleSalvar = async () => {
     if (!form.nome.trim()) {
-      setMessage({ text: "O nome do grupo não pode ser vazio.", type: "error" });
+      setMessage({
+        text: "O nome do grupo não pode ser vazio.",
+        type: "error",
+      });
       return;
     }
     try {
@@ -158,10 +177,30 @@ export default function GruposPage() {
     setGerenciandoId((prev) => (prev === id ? null : id));
     setMembroInput("");
     setFilmeInput("");
+    setFilmeSelecionado(null);
+    setFilmeSugestoes([]);
   };
 
   const toggleExpandir = (id) => {
     setExpandidoId((prev) => (prev === id ? null : id));
+  };
+
+  const handleFilmeInputChange = (valor) => {
+    setFilmeInput(valor);
+    setFilmeSelecionado(null);
+
+    if (!valor.trim()) {
+      setFilmeSugestoes([]);
+      return;
+    }
+
+    const q = valor.toLowerCase();
+
+    const sugestoes = filmesLista
+      .filter((f) => f.titulo?.toLowerCase().includes(q))
+      .slice(0, 6);
+
+    setFilmeSugestoes(sugestoes);
   };
 
   const handleAdicionarMembro = async (grupoId) => {
@@ -200,16 +239,31 @@ export default function GruposPage() {
   };
 
   const handleAdicionarFilme = async (grupoId) => {
-    if (!filmeInput.trim()) return;
+    if (!filmeSelecionado) {
+      setMessage({
+        text: "Selecione um filme válido da lista.",
+        type: "error",
+      });
+      return;
+    }
+
     try {
-      await adicionarFilme(grupoId, Number(filmeInput));
+      await adicionarFilme(grupoId, filmeSelecionado.id);
       setMessage({ text: "Filme adicionado com sucesso.", type: "success" });
       setFilmeInput("");
+      setFilmeSelecionado(null);
+      setFilmeSugestoes([]);
       mutate();
     } catch (error) {
       console.error(error);
       setMessage({ text: "Erro ao adicionar filme.", type: "error" });
     }
+  };
+
+  const handleSelecionarFilme = (filme) => {
+    setFilmeSelecionado({ id: filme.id, label: filme.titulo });
+    setFilmeInput(filme.titulo);
+    setFilmeSugestoes([]);
   };
 
   const handleRemoverFilme = async (grupoId, filmeId) => {
@@ -225,7 +279,6 @@ export default function GruposPage() {
 
   return (
     <div className={styles.containerGrupos}>
-
       <div className={styles.cartaoGrupos}>
         <div className={styles.cabecalho}>
           <div>
@@ -239,7 +292,9 @@ export default function GruposPage() {
         </div>
 
         {message.text && (
-          <p className={`${styles.mensagem} ${message.type === "success" ? styles.sucesso : styles.erro}`}>
+          <p
+            className={`${styles.mensagem} ${message.type === "success" ? styles.sucesso : styles.erro}`}
+          >
             {message.text}
           </p>
         )}
@@ -262,8 +317,16 @@ export default function GruposPage() {
             />
           </div>
           <div className={styles.acoes}>
-            <button className={styles.botaoSalvar} onClick={handleSalvar} disabled={saving}>
-              {saving ? "Salvando..." : editandoId ? "Atualizar Grupo" : "Criar Grupo"}
+            <button
+              className={styles.botaoSalvar}
+              onClick={handleSalvar}
+              disabled={saving}
+            >
+              {saving
+                ? "Salvando..."
+                : editandoId
+                  ? "Atualizar Grupo"
+                  : "Criar Grupo"}
             </button>
             {editandoId && (
               <button className={styles.botaoCancelar} onClick={handleCancelar}>
@@ -295,7 +358,6 @@ export default function GruposPage() {
           <div className={styles.listaGrupos}>
             {filtrados.map((grupo) => (
               <div key={grupo.id} className={styles.cardGrupo}>
-
                 <div className={styles.cardGrupoTopo}>
                   <div
                     className={styles.cardGrupoHeader}
@@ -304,7 +366,9 @@ export default function GruposPage() {
                     <div className={styles.cardGrupoNomeArea}>
                       <p className={styles.cardGrupoTitulo}>{grupo.nome}</p>
                       {grupo.descricao && (
-                        <p className={styles.cardGrupoDescricao}>{grupo.descricao}</p>
+                        <p className={styles.cardGrupoDescricao}>
+                          {grupo.descricao}
+                        </p>
                       )}
                       <p className={styles.cardGrupoDetalhe}>
                         {grupo.membros?.length || 0} membro(s) •{" "}
@@ -317,13 +381,22 @@ export default function GruposPage() {
                   </div>
 
                   <div className={styles.cardGrupoAcoes}>
-                    <button className={styles.botaoEditar} onClick={() => handleEditar(grupo)}>
+                    <button
+                      className={styles.botaoEditar}
+                      onClick={() => handleEditar(grupo)}
+                    >
                       Editar
                     </button>
-                    <button className={styles.botaoGerenciar} onClick={() => toggleGerenciar(grupo.id)}>
+                    <button
+                      className={styles.botaoGerenciar}
+                      onClick={() => toggleGerenciar(grupo.id)}
+                    >
                       {gerenciandoId === grupo.id ? "Fechar" : "Gerenciar"}
                     </button>
-                    <button className={styles.botaoExcluir} onClick={() => handleDeletar(grupo.id)}>
+                    <button
+                      className={styles.botaoExcluir}
+                      onClick={() => handleDeletar(grupo.id)}
+                    >
                       Excluir
                     </button>
                   </div>
@@ -342,9 +415,10 @@ export default function GruposPage() {
                     >
                       <div className={styles.expandidoInner}>
                         <div className={styles.expandidoContent}>
-
                           <div className={styles.expandidoSection}>
-                            <p className={styles.expandidoSectionTitle}>Membros</p>
+                            <p className={styles.expandidoSectionTitle}>
+                              Membros
+                            </p>
                             {grupo.membros?.length > 0 ? (
                               <div className={styles.membrosLista}>
                                 {grupo.membros.map((m) => (
@@ -354,26 +428,33 @@ export default function GruposPage() {
                                 ))}
                               </div>
                             ) : (
-                              <p className={styles.vazioSection}>Nenhum membro neste grupo.</p>
+                              <p className={styles.vazioSection}>
+                                Nenhum membro neste grupo.
+                              </p>
                             )}
                           </div>
 
                           <div className={styles.expandidoSection}>
-                            <p className={styles.expandidoSectionTitle}>Filmes</p>
+                            <p className={styles.expandidoSectionTitle}>
+                              Filmes
+                            </p>
                             {grupo.filmes?.length > 0 ? (
                               <div className={styles.filmesGrid}>
                                 {grupo.filmes.map((f) => (
                                   <div key={f.id} className={styles.filmeCard}>
                                     <FilmePoster titulo={f.titulo} />
-                                    <p className={styles.filmeTitulo}>{f.titulo}</p>
+                                    <p className={styles.filmeTitulo}>
+                                      {f.titulo}
+                                    </p>
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <p className={styles.vazioSection}>Nenhum filme adicionado ainda.</p>
+                              <p className={styles.vazioSection}>
+                                Nenhum filme adicionado ainda.
+                              </p>
                             )}
                           </div>
-
                         </div>
                       </div>
                     </motion.div>
@@ -383,7 +464,6 @@ export default function GruposPage() {
                 {/* painel de gerenciamento */}
                 {gerenciandoId === grupo.id && (
                   <div className={styles.painelGerenciar}>
-
                     <div className={styles.secaoGerenciar}>
                       <p className={styles.secaoTitulo}>Adicionar membro</p>
                       <div className={styles.linhaAdicionar}>
@@ -407,7 +487,9 @@ export default function GruposPage() {
                               {obterNomePerfil(m)}
                               <button
                                 className={styles.tagRemover}
-                                onClick={() => handleRemoverMembro(grupo.id, m.id)}
+                                onClick={() =>
+                                  handleRemoverMembro(grupo.id, m.id)
+                                }
                               >
                                 ×
                               </button>
@@ -420,15 +502,37 @@ export default function GruposPage() {
                     <div className={styles.secaoGerenciar}>
                       <p className={styles.secaoTitulo}>Adicionar filme</p>
                       <div className={styles.linhaAdicionar}>
-                        <input
-                          value={filmeInput}
-                          onChange={(e) => setFilmeInput(e.target.value)}
-                          placeholder="Nome do filme"
-                          className={styles.inputGerenciar}
-                        />
+                        <div className={styles.inputComSugestoes}>
+                          <input
+                            value={filmeInput}
+                            onChange={(e) =>
+                              handleFilmeInputChange(e.target.value)
+                            }
+                            placeholder="Buscar filme pelo título"
+                            className={styles.inputGerenciar}
+                            autoComplete="off"
+                          />
+
+                          {filmeSugestoes.length > 0 && (
+                            <div className={styles.sugestoesLista}>
+                              {filmeSugestoes.map((f) => (
+                                <button
+                                  key={f.id}
+                                  type="button"
+                                  className={styles.sugestaoItem}
+                                  onMouseDown={() => handleSelecionarFilme(f)}
+                                >
+                                  {f.titulo}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
                         <button
                           className={styles.botaoAdicionar}
                           onClick={() => handleAdicionarFilme(grupo.id)}
+                          disabled={!filmeSelecionado}
                         >
                           Adicionar
                         </button>
@@ -440,7 +544,9 @@ export default function GruposPage() {
                               {f.titulo}
                               <button
                                 className={styles.tagRemover}
-                                onClick={() => handleRemoverFilme(grupo.id, f.id)}
+                                onClick={() =>
+                                  handleRemoverFilme(grupo.id, f.id)
+                                }
                               >
                                 ×
                               </button>
@@ -449,10 +555,8 @@ export default function GruposPage() {
                         </div>
                       )}
                     </div>
-
                   </div>
                 )}
-
               </div>
             ))}
           </div>

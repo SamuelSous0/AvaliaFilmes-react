@@ -63,7 +63,9 @@
   padding: 14px;
   border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.2s, background-color 0.2s;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
 }
 
 .grupoFormulario input:focus,
@@ -481,19 +483,23 @@
 
 .sugestoesLista {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background-color: #1e1e1e;
-  border: 1px solid #444;
-  border-radius: 8px;
-  z-index: 100;
-  list-style: none;
-  padding: 4px 0;
-  margin: 0;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 30;
+
+  display: flex;
+  flex-direction: column;
+
   max-height: 220px;
   overflow-y: auto;
+
+  background: #080808;
+  border: 1px solid rgba(255, 204, 0, 0.45);
+  border-radius: 14px;
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.45);
+
+  padding: 6px;
 }
 
 .sugestoesLista::-webkit-scrollbar {
@@ -510,16 +516,23 @@
 }
 
 .sugestaoItem {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 9px 14px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #f5f5f5;
+
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 10px;
+
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
 }
 
 .sugestaoItem:hover {
-  background-color: #2a2a2a;
+  background: rgba(229, 9, 20, 0.18);
+  color: #ffcc00;
 }
 
 .sugestaoNome {
